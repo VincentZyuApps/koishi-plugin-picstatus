@@ -1,37 +1,228 @@
-# koishi-plugin-picstatus
+# 📊 koishi-plugin-picstatus 🖼️
 
-[![npm](https://img.shields.io/npm/v/koishi-plugin-picstatus?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-picstatus)
+<p>
+  <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/npm/v/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm version">
+  </a>
+  <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/npm/dm/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm downloads">
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
+  </a>
+  <br>
+  <a href="https://github.com/VincentZyuApps/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+  <a href="https://gitee.com/vincent-zyu/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/badge/Gitee-C71D23?style=for-the-badge&logo=gitee&logoColor=white" alt="Gitee">
+  </a>
+  <br>
+  <a href="https://forum.koishi.xyz/t/topic/xxxxx" target="_blank">
+    <img src="https://img.shields.io/badge/Koishi%20Forum-xxxxx-5546A3?style=for-the-badge" alt="Koishi Forum">
+  </a>
+  <a href="https://qm.qq.com/q/ZHj33L5cuC" target="_blank">
+    <img src="https://img.shields.io/badge/QQ群-1085190201-12B7F5?style=flat-square&logo=qq&logoColor=white" alt="QQ群">
+  </a>
+</p>
 
-跨平台采集设备与 Koishi 运行状态，并通过 Puppeteer 渲染图片。
+## 💬 交流反馈
 
-## 功能
+🐛 Bug 反馈 / 💡 建议 / 👨‍💻 插件开发交流，欢迎加群：
 
-- CPU、内存、Swap、磁盘、网络、进程和网站连通性状态。
-- Koishi Bot 信息、连接时间与消息收发计数。
-- 支持消息图片、本地文件或目录、URL 和无背景模式。
-- 支持 Windows、Linux、macOS 与容器环境。
-- 支持 npm 内置、Release 下载、自定义绝对路径和系统默认字体四种模式。
+~~QQ群：**259248174**（该群已停用）~~
 
-默认指令为 `picstatus`，别名包括 `运行状态`、`状态`、`zt` 和 `yxzt`；发生别名冲突时会跳过冲突项，不影响插件加载。
+QQ群：**1085190201** 🎉
 
-默认会在采集与渲染期间发送等待提示，并在状态图片成功发送后自动撤回；可通过 `enableWaitingHint` 关闭。
+💡 在群里直接艾特我，回复会更快哦~ ✨
 
-指令支持以下仅对本次出图生效的 options，不会修改管理端配置：
+跨平台采集当前设备与 Koishi 的运行状态，并通过 Puppeteer 渲染为图片。
+
+![PicStatus 状态图预览](docs/images/preview/preview.png)
+
+## ✨ 功能
+
+- 展示 CPU、内存、Swap、磁盘容量与 IO、逐网卡流量、进程排行和网站连通性。
+- 展示 Koishi Bot 的平台、账号、昵称、连接时间与消息收发数量。
+- 支持浅色和深色主题，以及模糊、圆角、阴影效果开关。
+- 支持消息图片、内置背景、本地文件或目录、远程 URL 和无背景模式。
+- 支持 npm 内置、Release 下载、自定义路径和系统默认字体四种模式。
+- 支持 Windows、Linux、macOS 与容器环境，单项采集失败不会中断整张图片。
+- 提供进程排序、显示数量和图片主题三个仅对本次出图生效的指令选项。
+
+## 📦 安装与依赖
+
+在 Koishi 插件市场中搜索并安装 `picstatus`，然后启用以下服务：
+
+| 服务 | 是否必需 | 用途 |
+| --- | --- | --- |
+| `puppeteer` | 是 | 渲染并截取状态图片 |
+| `http` | 是 | 获取头像、远程背景、网站状态和 Release 字体 |
+| `database` | 否 | 持久化 Bot 消息计数 |
+
+> 未启用 `puppeteer` 或 `http` 时，Koishi 不会加载本插件。选择 database 计数模式但服务不可用时，插件会记录警告并继续使用内存计数。
+
+## ⌨️ 指令
+
+默认指令：
+
+```text
+picstatus
+```
+
+默认别名为 `运行状态`、`状态`、`zt` 和 `yxzt`。别名与其他插件冲突时会自动跳过，不影响插件加载。
+
+### 临时选项
 
 ```text
 picstatus -s memory -n 10 -t dark
 ```
 
-- `-s, --sort <cpu|memory>`：进程排行榜按 CPU 或常驻内存降序排列。
-- `-n, --count <0-100>`：本次图片显示的进程数量，`0` 表示不显示进程数据。
-- `-t, --theme <light|dark>`：本次图片使用浅色或深色主题。
+| 选项 | 可选值 | 说明 |
+| --- | --- | --- |
+| `-s, --sort <sort>` | `cpu`、`memory` | 设置本次进程排行榜的排序方式 |
+| `-n, --count <count>` | `0-100` | 设置本次显示的进程数量，`0` 表示隐藏进程数据 |
+| `-t, --theme <theme>` | `light`、`dark` | 设置本次图片主题 |
 
-需要启用 Koishi 的 `puppeteer` 与 `http` 服务；使用持久化消息计数时还需要 `database` 服务。
+这些选项只覆盖本次请求，不会修改 Koishi 控制台中的全局配置。
 
-默认字体模式使用 npm 包内的 LXGW WenKai Screen，不访问公共字体 CDN。Release 模式仅在被选中时检查 `ctx.baseDir/data/fonts/LXGWWenKaiMono-Regular.ttf`，缺失或校验失败时依次尝试 Gitee 与 GitHub Release。自定义模式支持 TTF、OTF 和 WOFF2 绝对路径；字体准备失败会停止本次出图并写入后台日志。
+插件默认会先发送“正在采集并渲染”的等待提示；状态图片发送成功后会自动撤回该消息。
 
-## 来源与许可
+## ⚙️ 配置项
+
+### 📌 指令设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `command` | `string` | `picstatus` | 主指令名称，建议避免使用容易与官方插件冲突的 `status` |
+| `aliases` | `string[]` | `运行状态, 状态, zt, yxzt` | 指令别名，冲突项会被跳过 |
+| `authority` | `number` | `1` | 执行指令需要的最低权限等级 |
+| `showCurrentBot` | `boolean` | `false` | 是否只展示收到指令的当前 Bot |
+| `reply` | `boolean` | `true` | 发送提示、图片或错误时是否引用触发消息 |
+| `enableWaitingHint` | `boolean` | `true` | 是否发送采集渲染提示，并在成功后撤回 |
+
+### 🖼️ 图片设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `components` | `ComponentName[]` | 全部组件 | 图片组件及排列顺序，可删除或拖动调整 |
+| `imageType` | `jpeg \| png` | `jpeg` | 输出图片格式 |
+| `imageQuality` | `number` | `90` | JPEG 截图质量，范围 `1-100`，PNG 不使用该值 |
+| `imageWidth` | `number` | `650` | 图片宽度，范围 `480-1600` px |
+| `theme` | `light \| dark` | `light` | 默认明暗主题 |
+| `fontMode` | `npm \| release \| custom \| system` | `npm` | 图片字体来源 |
+| `customFontPath` | `string` | 空 | 自定义字体绝对路径，仅 custom 模式生效 |
+| `disableBlur` | `boolean` | `false` | 关闭卡片毛玻璃效果 |
+| `disableRadius` | `boolean` | `false` | 关闭卡片、标签和头像圆角 |
+| `disableShadow` | `boolean` | `false` | 关闭组件和文字阴影 |
+
+`components` 支持 `header`、`cpu`、`disk`、`network`、`process`、`footer`。默认按照该顺序显示全部组件。
+
+### 📊 采集设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `collectInterval` | `number` | `10` | 后台采样间隔，单位秒 |
+| `collectTimeout` | `number` | `10` | 单项状态采集超时，单位秒 |
+| `requestTimeout` | `number` | `8` | 网站、头像和远程背景请求超时，单位秒 |
+| `sites` | `{ name, url }[]` | 百度、Google | 网站状态与响应延迟检测列表 |
+| `processCount` | `number` | `10` | 进程排行榜条数，范围 `0-100`，`0` 表示隐藏 |
+| `processSort` | `cpu \| memory` | `cpu` | 进程排行榜排序依据 |
+| `ignoredProcesses` | `string[]` | 空 | 忽略的进程名称正则，不区分大小写 |
+| `ignoredDisks` | `string[]` | 空 | 忽略的磁盘挂载点正则，不区分大小写 |
+| `ignoredNetworks` | `string[]` | 回环接口规则 | 忽略的网卡名称正则，不区分大小写 |
+| `hideIdleIo` | `boolean` | `false` | 隐藏当前读写或收发速度均为零的磁盘与网卡 |
+
+Windows 会分别显示可用网卡，例如物理 Ethernet、VPN 与虚拟网卡。可以通过 `ignoredNetworks` 排除不希望展示的接口，例如：
+
+```text
+^Radmin VPN$
+^VMware Network Adapter
+```
+
+忽略项会作为正则表达式编译；无效规则会被跳过，因此建议先验证表达式是否符合预期。
+
+### 🌄 背景设置
+
+| 配置项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `backgroundMode` | `builtin \| local \| url \| none` | `builtin` | 默认背景来源 |
+| `backgroundPath` | `string` | `data/picstatus/backgrounds` | 本地背景文件或目录，相对路径基于 `ctx.baseDir` |
+| `backgroundUrl` | `string` | 空 | 固定远程背景地址，仅 URL 模式生效 |
+| `preloadCount` | `number` | `2` | 后台预加载数量，范围 `0-20`，`0` 表示禁用 |
+
+背景选择优先级如下：
+
+1. 当前消息或引用消息中的第一张图片。
+2. `backgroundMode` 指定的背景来源。
+3. 配置背景读取失败时使用内置背景。
+
+local 模式可以填写单个图片文件，也可以填写目录；目录模式会随机选择支持的图片。远程背景和消息图片会经过响应大小及 MIME 类型检查。
+
+### 🧠 统计与调试
+
+| 配置项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `counterStorage` | `memory \| database` | `memory` | Bot 消息计数存储方式 |
+| `resetCounterOnDisconnect` | `boolean` | `true` | Bot 断开时是否重置内存计数，database 模式不受影响 |
+| `debug` | `boolean` | `false` | 输出详细采集和渲染日志 |
+
+memory 模式无需数据库，Koishi 重启后计数会清空。database 模式按 `platform:selfId` 隔离保存，适合需要跨重启累计统计的实例。
+
+## 🔤 字体模式
+
+### npm 模式（默认）
+
+直接使用依赖包 `lxgw-wenkai-screen-web` 中的 WOFF2 字体切片。字体通过 Puppeteer 请求拦截从本地加载，不访问公共字体 CDN，适合绝大多数环境。
+
+### Release 模式
+
+仅在选择该模式后检查以下公共字体文件：
+
+```text
+ctx.baseDir/data/fonts/LXGWWenKaiMono-Regular.ttf
+```
+
+文件不存在或完整性校验失败时，会优先从 Gitee Release 下载，失败后回退到 GitHub Release。下载结果通过文件大小、MD5、SHA-1、SHA-256 与 SHA-512 校验后才会使用。该路径与其他插件共享，已有有效字体不会重复下载。
+
+### custom 模式
+
+填写字体文件的绝对路径，支持 `.ttf`、`.otf` 和 `.woff2`。插件会验证路径、文件大小与字体文件头；配置无效时会终止本次出图并提示检查后台日志。
+
+### system 模式
+
+不注入插件字体，直接使用 Puppeteer 所在系统可用的默认字体。容器中使用该模式时，请自行安装支持中文的字体。
+
+## 🖥️ 跨平台说明
+
+- Windows、Linux 与 macOS 使用同一套 Node.js 采集逻辑，不需要 Python 后端。
+- 容器环境中展示的是容器可见资源，并在图片页脚标注“容器资源”。
+- 不同系统对磁盘 IO、Swap、网络接口和 CPU 指标的支持程度不同，不可用项目会单独降级显示。
+- 多网卡设备默认展示所有未被忽略的活动接口，VPN 和虚拟网卡不会被擅自隐藏。
+- 网站检测结果受 Koishi 所在机器的 DNS、代理、防火墙和网络出口影响。
+
+## 🔧 常见问题
+
+### 为什么会显示 VPN 或虚拟网卡？
+
+插件按网卡分别展示 IO，以免误判默认出口。请在 `ignoredNetworks` 中添加名称正则来隐藏指定接口。
+
+### 为什么第一次出图较慢？
+
+首次运行需要启动 Puppeteer、完成第一次系统采样并加载字体。Release 模式首次还可能需要下载并校验字体。
+
+### 为什么网站检测失败但仍然能出图？
+
+各采集项相互隔离，单个网站、头像、磁盘或网络指标失败不会阻止其他内容渲染。
+
+### 为什么选择 database 后计数仍然没有持久化？
+
+请确认 Koishi 已启用 database 服务。服务缺失或读写失败时，插件会在日志中记录原因并回退到内存计数。
+
+## 📜 来源与许可
 
 本项目参考并移植自 [nonebot-plugin-picstatus](https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus)，原项目由 LgCuwukii 等贡献者开发并采用 MIT License。
 
-状态图字体使用 LXGW WenKai Screen 或 LXGW WenKai Mono，两者均依据 SIL Open Font License 1.1 分发，详细来源见 `notices.md`。
+插件本体依据 [MIT License](./LICENSE) 发布。`lxgw-wenkai-screen-web` 的 npm 封装依据 MIT License 分发，LXGW WenKai Screen 与 LXGW WenKai Mono 字体依据 SIL Open Font License 1.1 分发。
+
+完整的第三方版权与许可证声明请查看 [notices.md](./notices.md)。

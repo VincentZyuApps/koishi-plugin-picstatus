@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-picstatus",
-  "description": "跨平台采集设备与 Koishi 运行状态，并使用 Puppeteer 渲染状态图片",
-  "version": "0.0.2-beta.1+20260814",
+  "description": "📊 跨平台采集 Koishi运行状态 与 设备硬件信息，并使用 Puppeteer 渲染状态图片 🖼️",
+  "version": "0.0.3-beta.2+20260814",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
@@ -31,8 +31,8 @@
   },
   "koishi": {
     "description": {
-      "zh": "跨平台采集设备与 Koishi 运行状态，并渲染为图片",
-      "en": "Render cross-platform device and Koishi runtime status as an image."
+      "zh": "📊 跨平台采集 Koishi运行状态 与 设备硬件信息，并使用 Puppeteer 渲染状态图片 🖼️",
+      "en": "📊 Collect Koishi runtime status and device hardware information across platforms, then render status images using Puppeteer. 🖼️"
     },
     "service": {
       "required": [

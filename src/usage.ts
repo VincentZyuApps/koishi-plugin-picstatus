@@ -1,0 +1,71 @@
+const pkg = require('../package.json')
+
+export const usage = `
+<h2>📊 PicStatus 状态图片 🖼️</h2>
+<p><b>当前版本：</b>v${pkg.version}</p>
+
+<p>
+  <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/npm/v/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm version">
+  </a>
+  <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/npm/dm/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm downloads">
+  </a>
+  <br>
+  <a href="https://github.com/VincentZyuApps/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+  <a href="https://gitee.com/vincent-zyu/koishi-plugin-picstatus" target="_blank">
+    <img src="https://img.shields.io/badge/Gitee-C71D23?style=for-the-badge&logo=gitee&logoColor=white" alt="Gitee">
+  </a>
+  <br>
+  <a href="https://forum.koishi.xyz/t/topic/xxxxx" target="_blank">
+    <img src="https://img.shields.io/badge/Koishi%20Forum-xxxxx-5546A3?style=for-the-badge" alt="Koishi Forum">
+  </a>
+  <a href="https://qm.qq.com/q/ZHj33L5cuC" target="_blank">
+    <img src="https://img.shields.io/badge/QQ群-1085190201-12B7F5?style=flat-square&logo=qq&logoColor=white" alt="QQ群">
+  </a>
+</p>
+
+<h2>💬 交流反馈</h2>
+<p>🐛 Bug 反馈 / 💡 建议 / 👨‍💻 插件开发交流，欢迎加群：</p>
+<p><del>QQ群：<b>259248174</b>（该群已停用）</del></p>
+<p>QQ群：<b>1085190201</b> 🎉</p>
+<p>💡 在群里直接艾特我，回复会更快哦~ ✨</p>
+
+<p>发送 <code>picstatus</code>，即可查看当前设备与 Koishi 的图片状态面板。</p>
+<p><b>⚠️ 使用前请启用：</b><code>puppeteer</code> 与 <code>http</code> 服务；<code>database</code> 仅在需要持久化消息计数时启用。</p>
+
+<details>
+<summary><b>⌨️ 指令与临时选项</b></summary>
+<p>默认别名：<code>运行状态</code>、<code>状态</code>、<code>zt</code>、<code>yxzt</code>。</p>
+<pre><code>picstatus -s memory -n 10 -t dark</code></pre>
+<ul>
+  <li><code>-s, --sort &lt;cpu|memory&gt;</code>：设置本次进程排序方式。</li>
+  <li><code>-n, --count &lt;0-100&gt;</code>：设置本次进程显示数量，0 表示隐藏。</li>
+  <li><code>-t, --theme &lt;light|dark&gt;</code>：设置本次图片主题。</li>
+</ul>
+<p>这些选项仅对本次出图生效，不会修改控制台配置。</p>
+</details>
+
+<details>
+<summary><b>🔤 字体与背景说明</b></summary>
+<p>字体支持 npm 内置、Release 下载、自定义绝对路径和系统默认字体四种模式。</p>
+<p>Release 字体存放于 <code>ctx.baseDir/data/fonts/LXGWWenKaiMono-Regular.ttf</code>，仅在选择该模式且文件不可用时下载。</p>
+<p>背景支持消息图片、内置背景、本地文件或目录、远程 URL 和无背景模式；消息中的图片优先级最高。</p>
+</details>
+
+<details>
+<summary><b>📈 采集、计数与兼容性</b></summary>
+<p>支持 Windows、Linux、macOS 与容器环境，可展示 CPU、内存、Swap、磁盘、网络、进程、网站和 Bot 状态。</p>
+<p>消息计数默认保存在内存中；选择 database 后可跨重启保留，database 不可用时会回退到内存。</p>
+</details>
+
+<details>
+<summary><b>📜 来源与许可</b></summary>
+<p>本插件参考并移植自 <a href="https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus" target="_blank">nonebot-plugin-picstatus</a>，依据 MIT License 发布。</p>
+<p>LXGW WenKai 字体依据 SIL Open Font License 1.1 分发，完整声明请查看 npm 包中的 <code>notices.md</code>。</p>
+</details>
+
+<p>📖 完整配置与故障排查请查看插件 README。</p>
+`
