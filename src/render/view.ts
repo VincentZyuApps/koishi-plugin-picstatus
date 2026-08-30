@@ -32,7 +32,7 @@ export interface ViewModel {
   cpu: DonutView
   memory: DonutView
   swap: DonutView
-  memoryDetails: MemoryBarView[]
+  memoryBars: MemoryBarView[]
   disks: Array<{ name: string; percent: number | null; usage: string; error?: string }>
   diskIo: Array<{ name: string; read: string; write: string }>
   networks: Array<{ name: string; sent: string; received: string }>
@@ -62,10 +62,12 @@ function memoryPercent(item: MemoryMetric, mode: Config['memoryPercentMode']): n
 
 function memoryCaptionDetail(item: MemoryMetric): string | undefined {
   if (!item.total) return undefined
-  if (item.platform === 'linux') {
+  const procfsDetails = (item.platform === 'linux' || item.platform === 'android')
+    && item.segments.some((segment) => segment.kind === 'shared' || segment.kind === 'compressed' || segment.kind === 'buffers')
+  if (procfsDetails) {
     return `空${formatGiB(item.free)} 共${formatGiB(item.shared)} 缓${formatGiB(item.buffCache)} 可${formatGiB(item.available)}`
   }
-  if (item.platform === 'macos') {
+  if (item.platform === 'macos' || item.buffCache > 0) {
     return `空${formatGiB(item.free)} 缓${formatGiB(item.buffCache)} 可${formatGiB(item.available)}`
   }
   if (item.platform === 'windows') return `可${formatGiB(item.available)}`
@@ -95,8 +97,8 @@ function swapView(item: SwapMetric): DonutView {
   }
 }
 
-function linuxMemoryDetails(memory: MemoryMetric, swap: SwapMetric, enabled: boolean): MemoryBarView[] {
-  if (!enabled || memory.platform !== 'linux' || !memory.total) return []
+function memoryBars(memory: MemoryMetric, swap: SwapMetric, enabled: boolean): MemoryBarView[] {
+  if (!enabled || !memory.total) return []
   return [
     {
       label: 'MEM',
@@ -139,7 +141,7 @@ export function createView(snapshot: StatusSnapshot, config: Config): ViewModel 
     },
     memory: memoryView(memory, config.memoryPercentMode),
     swap: swapView(swap),
-    memoryDetails: linuxMemoryDetails(memory, swap, config.showLinuxMemoryDetails),
+    memoryBars: memoryBars(memory, swap, config.showMemoryBars),
     disks: value(snapshot.disks, []).map((item) => ({
       name: item.name, percent: item.percent,
       usage: item.error || `${formatBytes(item.used)} / ${formatBytes(item.total)}`,

@@ -48,6 +48,14 @@ test('Linux memory falls back to MemFree when MemAvailable is absent', () => {
   assert.equal(memory.available, memory.free)
 })
 
+test('Android procfs uses the same detailed classes as Linux', () => {
+  const { memory, swap } = parseLinuxMeminfo(linuxMeminfo, 'android')
+  assert.equal(memory.platform, 'android')
+  assert.deepEqual(memory.segments.map((item) => item.kind), ['used', 'shared', 'compressed', 'buffers', 'cache'])
+  assert.equal(memory.used, 3612112 * KIB)
+  assert.equal(swap.used, 3809048 * KIB)
+})
+
 test('aggregate platform adapters avoid invented Windows classes', () => {
   const data = {
     total: 1000, free: 400, used: 600, active: 600, available: 400,
@@ -61,4 +69,8 @@ test('aggregate platform adapters avoid invented Windows classes', () => {
   const mac = memoryFromSystemInformation({ ...data, free: 100, available: 400, active: 600, buffcache: 300 }, 'darwin')
   assert.equal(mac.memory.platform, 'macos')
   assert.deepEqual(mac.memory.segments, [{ kind: 'used', value: 600 }, { kind: 'cache', value: 300 }])
+
+  const android = memoryFromSystemInformation({ ...data, active: 0 }, 'android')
+  assert.equal(android.memory.platform, 'android')
+  assert.deepEqual(android.memory.segments, [{ kind: 'used', value: 600 }, { kind: 'cache', value: 0 }])
 })

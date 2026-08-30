@@ -157,17 +157,17 @@ picstatus -s memory -n 10 -t dark
 | `ignoredNetworks` | `string[]` | 回环接口规则 | 忽略的网卡名称正则，不区分大小写 |
 | `hideIdleIo` | `boolean` | `false` | 隐藏当前读写或收发速度均为零的磁盘与网卡 |
 | `memoryPercentMode` | `platform \| available \| occupied` | `platform` | RAM 圆环中心百分比口径（实验性） |
-| `showLinuxMemoryDetails` | `boolean` | `true` | 显示 Linux htop/free 风格 MEM 与 SWP 横条（实验性） |
+| `showMemoryBars` | `boolean` | `true` | 显示全平台 MEM 与 SWP 横条（实验性） |
 
 > #### 🧠 内存显示口径
 >
-> `platform` 使用各平台推荐口径：Linux 对应 htop 右侧的 used（绿色 used + 紫色 shared + compressed），Windows 对应物理已用内存，macOS 对应 active。`available` 使用 `(总量 - 可用) / 总量`，`occupied` 使用 `(总量 - 空闲) / 总量`。此配置同时控制 RAM 圆心百分比及下方第一行“已用 / 总量”的已用口径，保证两处数值一致。
+> `platform` 使用各平台推荐口径：Linux 和 Termux/Android 对应 htop 右侧的 used（绿色 used + 紫色 shared + compressed），Windows 对应物理已用内存，macOS 对应 active。`available` 使用 `(总量 - 可用) / 总量`，`occupied` 使用 `(总量 - 空闲) / 总量`。此配置同时控制 RAM 圆心百分比及下方第一行“已用 / 总量”的已用口径，保证两处数值一致。
 >
 > Linux RAM 圆环按 htop 分类显示：绿色 used、紫色 shared、深灰 compressed、蓝色 buffers、黄色 cache。圆环的分段长度始终表示真实分类，不会随中心百分比口径改变。圆环下方第一行保留“已用 / 总量”格式，第二行显示空闲、共享、buff/cache 与可用；SWAP 同样在第一行显示“已用 / 总量”，第二行显示空闲。
 >
-> Windows 只显示系统能够稳定提供的物理已用与可用内存；macOS 显示 active 与可回收缓存。插件不会把 Linux 独有的 shared、buffers 等名称套用到其他平台。Windows 的 SWAP 表示 pagefile，未配置时显示“未配置”。
+> MEM 横条会按各平台真实可获取的数据染色：Linux 使用完整 htop 分类；Termux/Android 优先读取 `/proc/meminfo` 使用同一分类，失败后回退为通用 used/cache/free；Windows 显示绿色物理已用和灰色可用；macOS 显示绿色 active、黄色 cache 和灰色剩余；其他平台显示可获得的 used、cache 和剩余。SWP 横条使用红色 used、黄色 cached 和灰色 free，Windows 的 SWAP 表示 pagefile，未配置时显示“未配置”。
 >
-> `showLinuxMemoryDetails` 只控制 Linux 状态图底部的 MEM/SWP 横条；关闭后仍保留分类圆环和紧凑数字。第一行会在 KiB、MiB、GiB 等 IEC 单位间自适应，第二行和横条数值固定使用两位小数 GiB，避免 `free -g` 的整数取整误差。
+> `showMemoryBars` 控制所有平台状态图底部的 MEM/SWP 横条；关闭后仍保留分类圆环和紧凑数字。横条文字采用平台分类对应的 used / total，不随 `memoryPercentMode` 改变。第一行会在 KiB、MiB、GiB 等 IEC 单位间自适应，第二行和横条数值固定使用两位小数 GiB，避免 `free -g` 的整数取整误差。
 
 > Windows 会分别显示可用网卡，例如物理 Ethernet、VPN 与虚拟网卡。可以通过 `ignoredNetworks` 排除不希望展示的接口，例如：
 >

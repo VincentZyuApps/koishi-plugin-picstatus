@@ -9,7 +9,7 @@ export const config = {
   components: ['header', 'cpu', 'disk', 'network', 'process', 'footer'],
   imageWidth: 650,
   theme: 'light', disableBlur: false, disableRadius: false, disableShadow: false,
-  memoryPercentMode: 'platform', showLinuxMemoryDetails: true,
+  memoryPercentMode: 'platform', showMemoryBars: true,
 } as Config
 
 export const snapshot: StatusSnapshot = {
@@ -37,7 +37,7 @@ export const snapshot: StatusSnapshot = {
 test('default template contains every component and escapes dynamic text', () => {
   const html = buildHtml(createView(snapshot, config), { data: null, mime: '', source: 'builtin' }, config)
   assert.match(html, /class="card resources"/)
-  assert.match(html, /class="memory-details"/)
+  assert.match(html, /class="memory-bars"/)
   assert.match(html, /MEM/)
   assert.match(html, /SWP/)
   assert.match(html, /--ring-gradient:conic-gradient/)
@@ -90,6 +90,7 @@ test('RAM detail lines use only fields supported by each platform', () => {
   }, config)
   assert.equal(windows.memory.caption, '6.00GiB / 8.00GiB')
   assert.equal(windows.memory.captionDetail, '可2.00G')
+  assert.deepEqual(windows.memoryBars[0].segments, [{ kind: 'used', percent: 75 }])
 
   const macos = createView({
     ...snapshot,
@@ -102,6 +103,35 @@ test('RAM detail lines use only fields supported by each platform', () => {
   }, config)
   assert.equal(macos.memory.caption, '4.00GiB / 8.00GiB')
   assert.equal(macos.memory.captionDetail, '空1.00G 缓2.00G 可3.00G')
+  assert.deepEqual(macos.memoryBars[0].segments, [
+    { kind: 'used', percent: 50 },
+    { kind: 'cache', percent: 25 },
+  ])
+})
+
+test('Android procfs and generic platforms both expose memory bars', () => {
+  const memory = snapshot.memory.status === 'ok' ? snapshot.memory.value : assert.fail('memory fixture unavailable')
+  const android = createView({
+    ...snapshot,
+    memory: { status: 'ok', value: { ...memory, platform: 'android' } },
+  }, config)
+  assert.equal(android.memoryBars.length, 2)
+  assert.equal(android.memory.captionDetail, '空0.93G 共0.19G 缓10.43G 可10.24G')
+  assert.deepEqual(android.memoryBars[0].segments.map((item) => item.kind), ['used', 'shared', 'compressed', 'buffers', 'cache'])
+
+  const generic = createView({
+    ...snapshot,
+    memory: { status: 'ok', value: {
+      ...memory, platform: 'other', shared: 0, buffers: 0, compressed: 0,
+      used: 6 * 1024 ** 3, total: 10 * 1024 ** 3, free: 2 * 1024 ** 3,
+      available: 4 * 1024 ** 3, cache: 2 * 1024 ** 3, buffCache: 2 * 1024 ** 3,
+      segments: [{ kind: 'used', value: 6 * 1024 ** 3 }, { kind: 'cache', value: 2 * 1024 ** 3 }],
+    } },
+  }, config)
+  assert.deepEqual(generic.memoryBars[0].segments, [
+    { kind: 'used', percent: 60 },
+    { kind: 'cache', percent: 20 },
+  ])
 })
 
 test('unavailable memory and unconfigured SWAP have no detail line', () => {
@@ -114,10 +144,21 @@ test('unavailable memory and unconfigured SWAP have no detail line', () => {
   assert.equal(view.memory.captionDetail, undefined)
   assert.equal(view.swap.caption, '未配置')
   assert.equal(view.swap.captionDetail, undefined)
+  assert.equal(view.memoryBars.length, 0)
 })
 
-test('Linux detail switch removes only the full-width bars', () => {
-  const view = createView(snapshot, { ...config, showLinuxMemoryDetails: false })
-  assert.equal(view.memoryDetails.length, 0)
+test('global memory bar switch removes only the full-width bars', () => {
+  const view = createView(snapshot, { ...config, showMemoryBars: false })
+  assert.equal(view.memoryBars.length, 0)
   assert.equal(view.memory.segments.length, 5)
+})
+
+test('unconfigured SWAP keeps its row when memory bars are enabled', () => {
+  const view = createView({
+    ...snapshot,
+    swap: { status: 'ok', value: { percent: null, used: 0, reportedUsed: 0, total: 0, free: 0, cached: 0 } },
+  }, config)
+  assert.equal(view.memoryBars.length, 2)
+  assert.equal(view.memoryBars[1].value, '未配置')
+  assert.deepEqual(view.memoryBars[1].segments, [])
 })

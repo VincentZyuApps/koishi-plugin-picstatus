@@ -17,6 +17,7 @@ function percent(used: number, total: number): number | null {
 
 function platformName(platform: NodeJS.Platform): MemoryPlatform {
   if (platform === 'linux') return 'linux'
+  if (platform === 'android') return 'android'
   if (platform === 'win32') return 'windows'
   if (platform === 'darwin') return 'macos'
   return 'other'
@@ -40,7 +41,7 @@ function parseMeminfoValues(input: string): Map<string, number> {
   return values
 }
 
-export function parseLinuxMeminfo(input: string): { memory: MemoryMetric; swap: SwapMetric } {
+export function parseLinuxMeminfo(input: string, platform: 'linux' | 'android' = 'linux'): { memory: MemoryMetric; swap: SwapMetric } {
   const values = parseMeminfoValues(input)
   const total = clampBytes(values.get('MemTotal') ?? 0)
   if (!total) throw new Error('/proc/meminfo 缺少有效的 MemTotal')
@@ -81,7 +82,7 @@ export function parseLinuxMeminfo(input: string): { memory: MemoryMetric; swap: 
 
   return {
     memory: {
-      platform: 'linux', total, free, available, used, reportedUsed, shared, buffers, cache,
+      platform, total, free, available, used, reportedUsed, shared, buffers, cache,
       buffCache, compressed, segments, percent: percent(used, total),
     },
     swap: {
@@ -97,9 +98,10 @@ export function memoryFromSystemInformation(data: MemData, platform = process.pl
   const available = clampBytes(data.available, total)
   const free = clampBytes(memoryPlatform === 'windows' ? available : data.free, total)
   const occupied = total - free
+  const active = clampBytes(data.active, occupied)
   const preferredUsed = memoryPlatform === 'windows'
     ? total - available
-    : clampBytes(data.active, occupied)
+    : active || clampBytes(data.used, occupied)
   const segments = capSegments([
     { kind: 'used', value: preferredUsed },
     { kind: 'cache', value: occupied - preferredUsed },
@@ -149,9 +151,9 @@ export async function collectCpu(): Promise<CpuMetric> {
 
 export async function collectMemory(): Promise<{ memory: MemoryMetric; swap: SwapMetric }> {
   const data = await si.mem()
-  if (process.platform === 'linux') {
+  if (process.platform === 'linux' || process.platform === 'android') {
     try {
-      return parseLinuxMeminfo(await fs.promises.readFile('/proc/meminfo', 'utf8'))
+      return parseLinuxMeminfo(await fs.promises.readFile('/proc/meminfo', 'utf8'), process.platform)
     } catch {
       // systeminformation remains a useful aggregate fallback when procfs is unavailable.
     }

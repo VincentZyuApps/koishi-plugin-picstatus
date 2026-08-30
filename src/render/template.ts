@@ -42,10 +42,10 @@ function donut(item: ViewModel['cpu']): string {
   return `<div class="donut"><div class="ring ${segmented ? 'segmented' : level(percent)}" style="${style}"><div class="ring-value">${percent == null ? '未部署' : `${percent}%`}</div></div><div class="donut-title">${e(item.title)}</div><div class="donut-caption"><div class="donut-caption-primary">${e(item.caption)}</div>${detail}</div></div>`
 }
 
-function memoryDetails(view: ViewModel): string {
-  if (!view.memoryDetails.length) return ''
-  const rows = view.memoryDetails.map((item) => `<div class="resource-row"><div class="resource-label">${e(item.label)}</div><div class="resource-bar" style="--bar-gradient:${segmentGradient(item.segments, 'bar')}"><div class="resource-value">${e(item.value)}</div></div></div>`).join('')
-  return `<div class="memory-details">${rows}</div>`
+function memoryBars(view: ViewModel): string {
+  if (!view.memoryBars.length) return ''
+  const rows = view.memoryBars.map((item) => `<div class="resource-row"><div class="resource-label">${e(item.label)}</div><div class="resource-bar" style="--bar-gradient:${segmentGradient(item.segments, 'bar')}"><div class="resource-value">${e(item.value)}</div></div></div>`).join('')
+  return `<div class="memory-bars">${rows}</div>`
 }
 
 function header(view: ViewModel): string {
@@ -72,7 +72,7 @@ function processes(view: ViewModel): string {
 
 export function buildHtml(view: ViewModel, background: BackgroundData, config: Config, fontCss = ''): string {
   const map: Record<string, () => string> = {
-    header: () => header(view), cpu: () => `<section class="card resources"><div class="donuts">${donut(view.cpu)}${donut(view.memory)}${donut(view.swap)}</div>${memoryDetails(view)}</section>`,
+    header: () => header(view), cpu: () => `<section class="card resources"><div class="donuts">${donut(view.cpu)}${donut(view.memory)}${donut(view.swap)}</div>${memoryBars(view)}</section>`,
     disk: () => disk(view), network: () => network(view), process: () => processes(view),
     footer: () => `<footer class="footer">npm/github: koishi-plugin-picstatus | ${e(view.generatedAt)}<br>${e(view.system)}${view.container ? ' | 容器资源' : ''}</footer>`,
   }

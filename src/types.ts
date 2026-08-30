@@ -8,7 +8,7 @@ export interface UsageMetric {
   total: number
 }
 
-export type MemoryPlatform = 'linux' | 'windows' | 'macos' | 'other'
+export type MemoryPlatform = 'linux' | 'android' | 'windows' | 'macos' | 'other'
 export type MemorySegmentKind = 'used' | 'shared' | 'compressed' | 'buffers' | 'cache'
 
 export interface MemorySegment {
