@@ -1,7 +1,68 @@
 import type { Bot, Context, Session } from 'koishi'
 import type { BotMetric, MetricResult } from '../types'
 import type { Config } from '../config'
-import { fetchImage, toDataUrl } from '../utils/image'
+import type { ImageFileResponse } from '../utils/image'
+import { fetchImage, toDataUrl, validateImageFile } from '../utils/image'
+
+interface TelegramAvatarBot {
+  platform?: string
+  adapterName?: string
+  server?: string
+  local?: boolean
+  file?: {
+    config?: { endpoint?: string }
+    file?: (source: string, options?: { timeout?: number }) => Promise<ImageFileResponse>
+  }
+  $getFile?: (filePath: string) => Promise<ImageFileResponse>
+}
+
+function pathAfterUrlPrefix(source: string, prefix: string): string | undefined {
+  try {
+    const sourceUrl = new URL(source)
+    const prefixUrl = new URL(prefix)
+    if (sourceUrl.origin !== prefixUrl.origin) return
+    const basePath = prefixUrl.pathname.replace(/\/+$/, '')
+    if (!sourceUrl.pathname.startsWith(`${basePath}/`)) return
+    const filePath = sourceUrl.pathname.slice(basePath.length + 1)
+    if (!filePath) return
+    try {
+      return decodeURIComponent(filePath)
+    } catch {
+      return filePath
+    }
+  } catch {
+    return
+  }
+}
+
+export function resolveTelegramAvatarPath(bot: TelegramAvatarBot, source: string): string | undefined {
+  if (bot.platform !== 'telegram' && bot.adapterName !== 'telegram') return
+  const prefixes = [bot.server, bot.file?.config?.endpoint]
+  for (const prefix of prefixes) {
+    if (!prefix) continue
+    const filePath = pathAfterUrlPrefix(source, prefix)
+    if (filePath) return filePath
+  }
+}
+
+async function fetchTelegramAvatar(bot: TelegramAvatarBot, filePath: string, timeout: number) {
+  if (!bot.local && bot.file?.file) {
+    return validateImageFile(await bot.file.file(`/${filePath}`, { timeout }))
+  }
+  if (bot.$getFile) return validateImageFile(await bot.$getFile(filePath))
+}
+
+export async function fetchBotAvatar(ctx: Context, bot: Bot, source: string, timeout: number) {
+  const telegramBot = bot as Bot & TelegramAvatarBot
+  const filePath = resolveTelegramAvatarPath(telegramBot, source)
+  if (filePath) {
+    try {
+      const image = await fetchTelegramAvatar(telegramBot, filePath, timeout)
+      if (image) return image
+    } catch {}
+  }
+  return fetchImage(ctx, source, timeout)
+}
 
 export interface CounterValue {
   received: number
@@ -123,10 +184,10 @@ export class BotCollector {
     let avatar: string | undefined
     if (avatarUrl) {
       try {
-        const image = await fetchImage(this.ctx, avatarUrl, this.config.requestTimeout * 1000)
+        const image = await fetchBotAvatar(this.ctx, bot, avatarUrl, this.config.requestTimeout * 1000)
         avatar = toDataUrl(image.data, image.mime)
-      } catch (error) {
-        this.ctx.logger('picstatus').debug(`Bot ${bot.sid} 头像加载失败: ${error instanceof Error ? error.message : error}`)
+      } catch {
+        this.ctx.logger('picstatus').debug(`Bot ${bot.sid} 头像加载失败，已使用文字头像`)
       }
     }
     return {

@@ -38,7 +38,15 @@ QQ群：**1085190201** 🎉
 
 跨平台采集当前设备与 Koishi 的运行状态，并通过 Puppeteer 渲染为图片。
 
-![PicStatus 状态图预览](docs/images/preview/preview.png)
+## 🖼️ 状态图预览
+
+### Windows
+
+![PicStatus Windows 状态图预览](docs/images/preview/preview.windows.png)
+
+### Linux
+
+![PicStatus Linux 状态图预览](docs/images/preview/preview.linux.png)
 
 ## ✨ 功能
 
