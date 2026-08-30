@@ -84,9 +84,9 @@ picstatus -s memory -n 10 -t dark
 | `-n, --count <count>` | `0-100` | 设置本次显示的进程数量，`0` 表示隐藏进程数据 |
 | `-t, --theme <theme>` | `light`、`dark` | 设置本次图片主题 |
 
-这些选项只覆盖本次请求，不会修改 Koishi 控制台中的全局配置。
-
-插件默认会先发送“正在采集并渲染”的等待提示；状态图片发送成功后会自动撤回该消息。
+> 这些选项只覆盖本次请求，不会修改 Koishi 控制台中的全局配置。
+>
+> 插件默认会先发送“正在采集并渲染”的等待提示；状态图片发送成功后会自动撤回该消息。
 
 ## ⚙️ 配置项
 
@@ -116,7 +116,31 @@ picstatus -s memory -n 10 -t dark
 | `disableRadius` | `boolean` | `false` | 关闭卡片、标签和头像圆角 |
 | `disableShadow` | `boolean` | `false` | 关闭组件和文字阴影 |
 
-`components` 支持 `header`、`cpu`、`disk`、`network`、`process`、`footer`。默认按照该顺序显示全部组件。
+> `components` 支持 `header`、`cpu`、`disk`、`network`、`process`、`footer`。默认按照该顺序显示全部组件。
+
+> #### 🔤 字体模式
+>
+> ##### npm 模式（默认）
+>
+> 直接使用依赖包 `lxgw-wenkai-screen-web` 中的 WOFF2 字体切片。字体通过 Puppeteer 请求拦截从本地加载，不访问公共字体 CDN，适合绝大多数环境。
+>
+> ##### Release 模式
+>
+> 仅在选择该模式后检查以下公共字体文件：
+>
+> ```text
+> ctx.baseDir/data/fonts/LXGWWenKaiMono-Regular.ttf
+> ```
+>
+> 文件不存在或完整性校验失败时，会优先从 Gitee Release 下载，失败后回退到 GitHub Release。下载结果通过文件大小、MD5、SHA-1、SHA-256 与 SHA-512 校验后才会使用。该路径与其他插件共享，已有有效字体不会重复下载。
+>
+> ##### custom 模式
+>
+> 填写字体文件的绝对路径，支持 `.ttf`、`.otf` 和 `.woff2`。插件会验证路径、文件大小与字体文件头；配置无效时会终止本次出图并提示检查后台日志。
+>
+> ##### system 模式
+>
+> 不注入插件字体，直接使用 Puppeteer 所在系统可用的默认字体。容器中使用该模式时，请自行安装支持中文的字体。
 
 ### 📊 采集设置
 
@@ -132,15 +156,27 @@ picstatus -s memory -n 10 -t dark
 | `ignoredDisks` | `string[]` | 空 | 忽略的磁盘挂载点正则，不区分大小写 |
 | `ignoredNetworks` | `string[]` | 回环接口规则 | 忽略的网卡名称正则，不区分大小写 |
 | `hideIdleIo` | `boolean` | `false` | 隐藏当前读写或收发速度均为零的磁盘与网卡 |
+| `memoryPercentMode` | `platform \| available \| occupied` | `platform` | RAM 圆环中心百分比口径（实验性） |
+| `showLinuxMemoryDetails` | `boolean` | `true` | 显示 Linux htop/free 风格 MEM 与 SWP 横条（实验性） |
 
-Windows 会分别显示可用网卡，例如物理 Ethernet、VPN 与虚拟网卡。可以通过 `ignoredNetworks` 排除不希望展示的接口，例如：
+> #### 🧠 内存显示口径
+>
+> `platform` 使用各平台推荐口径：Linux 对应 htop 右侧的 used（绿色 used + 紫色 shared + compressed），Windows 对应物理已用内存，macOS 对应 active。`available` 使用 `(总量 - 可用) / 总量`，`occupied` 使用 `(总量 - 空闲) / 总量`。此配置同时控制 RAM 圆心百分比及下方第一行“已用 / 总量”的已用口径，保证两处数值一致。
+>
+> Linux RAM 圆环按 htop 分类显示：绿色 used、紫色 shared、深灰 compressed、蓝色 buffers、黄色 cache。圆环的分段长度始终表示真实分类，不会随中心百分比口径改变。圆环下方第一行保留“已用 / 总量”格式，第二行显示空闲、共享、buff/cache 与可用；SWAP 同样在第一行显示“已用 / 总量”，第二行显示空闲。
+>
+> Windows 只显示系统能够稳定提供的物理已用与可用内存；macOS 显示 active 与可回收缓存。插件不会把 Linux 独有的 shared、buffers 等名称套用到其他平台。Windows 的 SWAP 表示 pagefile，未配置时显示“未配置”。
+>
+> `showLinuxMemoryDetails` 只控制 Linux 状态图底部的 MEM/SWP 横条；关闭后仍保留分类圆环和紧凑数字。第一行会在 KiB、MiB、GiB 等 IEC 单位间自适应，第二行和横条数值固定使用两位小数 GiB，避免 `free -g` 的整数取整误差。
 
-```text
-^Radmin VPN$
-^VMware Network Adapter
-```
-
-忽略项会作为正则表达式编译；无效规则会被跳过，因此建议先验证表达式是否符合预期。
+> Windows 会分别显示可用网卡，例如物理 Ethernet、VPN 与虚拟网卡。可以通过 `ignoredNetworks` 排除不希望展示的接口，例如：
+>
+> ```text
+> ^Radmin VPN$
+> ^VMware Network Adapter
+> ```
+>
+> 忽略项会作为正则表达式编译；无效规则会被跳过，因此建议先验证表达式是否符合预期。
 
 ### 🌄 背景设置
 
@@ -151,13 +187,13 @@ Windows 会分别显示可用网卡，例如物理 Ethernet、VPN 与虚拟网�
 | `backgroundUrl` | `string` | 空 | 固定远程背景地址，仅 URL 模式生效 |
 | `preloadCount` | `number` | `2` | 后台预加载数量，范围 `0-20`，`0` 表示禁用 |
 
-背景选择优先级如下：
-
-1. 当前消息或引用消息中的第一张图片。
-2. `backgroundMode` 指定的背景来源。
-3. 配置背景读取失败时使用内置背景。
-
-local 模式可以填写单个图片文件，也可以填写目录；目录模式会随机选择支持的图片。远程背景和消息图片会经过响应大小及 MIME 类型检查。
+> 背景选择优先级如下：
+>
+> 1. 当前消息或引用消息中的第一张图片。
+> 2. `backgroundMode` 指定的背景来源。
+> 3. 配置背景读取失败时使用内置背景。
+>
+> local 模式可以填写单个图片文件，也可以填写目录；目录模式会随机选择支持的图片。远程背景和消息图片会经过响应大小及 MIME 类型检查。
 
 ### 🧠 统计与调试
 
@@ -167,57 +203,7 @@ local 模式可以填写单个图片文件，也可以填写目录；目录模�
 | `resetCounterOnDisconnect` | `boolean` | `true` | Bot 断开时是否重置内存计数，database 模式不受影响 |
 | `debug` | `boolean` | `false` | 输出详细采集和渲染日志 |
 
-memory 模式无需数据库，Koishi 重启后计数会清空。database 模式按 `platform:selfId` 隔离保存，适合需要跨重启累计统计的实例。
-
-## 🔤 字体模式
-
-### npm 模式（默认）
-
-直接使用依赖包 `lxgw-wenkai-screen-web` 中的 WOFF2 字体切片。字体通过 Puppeteer 请求拦截从本地加载，不访问公共字体 CDN，适合绝大多数环境。
-
-### Release 模式
-
-仅在选择该模式后检查以下公共字体文件：
-
-```text
-ctx.baseDir/data/fonts/LXGWWenKaiMono-Regular.ttf
-```
-
-文件不存在或完整性校验失败时，会优先从 Gitee Release 下载，失败后回退到 GitHub Release。下载结果通过文件大小、MD5、SHA-1、SHA-256 与 SHA-512 校验后才会使用。该路径与其他插件共享，已有有效字体不会重复下载。
-
-### custom 模式
-
-填写字体文件的绝对路径，支持 `.ttf`、`.otf` 和 `.woff2`。插件会验证路径、文件大小与字体文件头；配置无效时会终止本次出图并提示检查后台日志。
-
-### system 模式
-
-不注入插件字体，直接使用 Puppeteer 所在系统可用的默认字体。容器中使用该模式时，请自行安装支持中文的字体。
-
-## 🖥️ 跨平台说明
-
-- Windows、Linux 与 macOS 使用同一套 Node.js 采集逻辑，不需要 Python 后端。
-- 容器环境中展示的是容器可见资源，并在图片页脚标注“容器资源”。
-- 不同系统对磁盘 IO、Swap、网络接口和 CPU 指标的支持程度不同，不可用项目会单独降级显示。
-- 多网卡设备默认展示所有未被忽略的活动接口，VPN 和虚拟网卡不会被擅自隐藏。
-- 网站检测结果受 Koishi 所在机器的 DNS、代理、防火墙和网络出口影响。
-
-## 🔧 常见问题
-
-### 为什么会显示 VPN 或虚拟网卡？
-
-插件按网卡分别展示 IO，以免误判默认出口。请在 `ignoredNetworks` 中添加名称正则来隐藏指定接口。
-
-### 为什么第一次出图较慢？
-
-首次运行需要启动 Puppeteer、完成第一次系统采样并加载字体。Release 模式首次还可能需要下载并校验字体。
-
-### 为什么网站检测失败但仍然能出图？
-
-各采集项相互隔离，单个网站、头像、磁盘或网络指标失败不会阻止其他内容渲染。
-
-### 为什么选择 database 后计数仍然没有持久化？
-
-请确认 Koishi 已启用 database 服务。服务缺失或读写失败时，插件会在日志中记录原因并回退到内存计数。
+> memory 模式无需数据库，Koishi 重启后计数会清空。database 模式按 `platform:selfId` 隔离保存，适合需要跨重启累计统计的实例。
 
 ## 📜 来源与许可
 

@@ -8,6 +8,7 @@ export interface SiteConfig {
 export type ComponentName = 'header' | 'cpu' | 'disk' | 'network' | 'process' | 'footer'
 export type BackgroundMode = 'builtin' | 'local' | 'url' | 'none'
 export type FontMode = 'npm' | 'release' | 'custom' | 'system'
+export type MemoryPercentMode = 'platform' | 'available' | 'occupied'
 
 export const PROCESS_COUNT_MIN = 0
 export const PROCESS_COUNT_MAX = 100
@@ -45,6 +46,8 @@ export interface Config {
   ignoredDisks: string[] // 💽 忽略的磁盘挂载点正则列表
   ignoredNetworks: string[] // 📡 忽略的网卡名称正则列表
   hideIdleIo: boolean // 💤 是否隐藏无读写流量的项目
+  memoryPercentMode: MemoryPercentMode // 🧠 RAM 圆环百分比口径
+  showLinuxMemoryDetails: boolean // 📊 是否显示 Linux htop/free 风格内存条
 
   // ---- 🌄 背景设置 ----
   backgroundMode: BackgroundMode // 🖼️ 背景图片来源模式
@@ -204,6 +207,19 @@ export const Config: Schema<Config> = Schema.intersect([
     hideIdleIo: Schema.boolean()
       .default(false)
       .description('💤 是否隐藏当前读写或收发速度均为 0 的磁盘与网卡项目'),
+    memoryPercentMode: Schema.union([
+      Schema.const('platform').description('🧠 平台推荐：Linux 使用 htop 已用、Windows 使用物理已用、macOS 使用活跃内存'),
+      Schema.const('available').description('📉 内存压力：(总量 - 可用) / 总量'),
+      Schema.const('occupied').description('📈 非空闲总量：(总量 - 空闲) / 总量'),
+    ])
+      .role('radio')
+      .default('platform')
+      .description('🧮 RAM 圆环中心百分比及下方第一行“已用 / 总量”的统计口径<br><i>此设置不改变圆环和彩条中各类内存的真实长度。</i>')
+      .experimental(),
+    showLinuxMemoryDetails: Schema.boolean()
+      .default(true)
+      .description('📊 是否在 Linux 状态图中显示 htop/free 风格的 MEM 与 SWP 横条<br><i>仅 Linux 生效，关闭后仍保留分类圆环和紧凑数字。</i>')
+      .experimental(),
   }).description('📊 状态采集设置 🔍'),
 
   // ---- 🌄 背景设置 ----

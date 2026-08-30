@@ -2,16 +2,50 @@ import type { Config } from '../config'
 import type { BackgroundData } from '../types'
 import { escapeHtml } from '../utils/format'
 import { toDataUrl } from '../utils/image'
-import type { ViewModel } from './view'
+import type { SegmentKind, SegmentView, ViewModel } from './view'
 import { styles } from './styles'
 
 const e = escapeHtml
 const level = (percent: number | null) => percent != null && percent >= 90 ? 'high' : percent != null && percent >= 70 ? 'medium' : ''
 const empty = '<div class="empty">暂无数据</div>'
 
+const segmentColors: Record<SegmentKind, string> = {
+  used: 'var(--memory-used)',
+  shared: 'var(--memory-shared)',
+  compressed: 'var(--memory-compressed)',
+  buffers: 'var(--memory-buffers)',
+  cache: 'var(--memory-cache)',
+  'swap-used': 'var(--swap-used)',
+  'swap-cache': 'var(--swap-cache)',
+}
+
+function segmentGradient(segments: SegmentView[], direction: 'ring' | 'bar'): string {
+  let offset = 0
+  const stops: string[] = []
+  for (const segment of segments) {
+    const start = offset
+    offset = Math.min(100, offset + Math.max(0, segment.percent))
+    if (offset > start) stops.push(`${segmentColors[segment.kind]} ${start.toFixed(4)}% ${offset.toFixed(4)}%`)
+    if (offset >= 100) break
+  }
+  stops.push(`var(--memory-free) ${offset.toFixed(4)}% 100%`)
+  return direction === 'ring'
+    ? `conic-gradient(${stops.join(',')})`
+    : `linear-gradient(to right,${stops.join(',')})`
+}
+
 function donut(item: ViewModel['cpu']): string {
   const percent = item.percent == null ? null : Math.round(item.percent)
-  return `<div class="donut"><div class="ring ${level(percent)}" style="--p:${percent ?? 0}"><div class="ring-value">${percent == null ? '未部署' : `${percent}%`}</div></div><div class="donut-title">${e(item.title)}</div><div class="donut-caption">${e(item.caption)}</div></div>`
+  const segmented = item.segments.length > 0
+  const style = segmented ? `--ring-gradient:${segmentGradient(item.segments, 'ring')}` : `--p:${percent ?? 0}`
+  const detail = item.captionDetail ? `<div class="donut-caption-detail">${e(item.captionDetail)}</div>` : ''
+  return `<div class="donut"><div class="ring ${segmented ? 'segmented' : level(percent)}" style="${style}"><div class="ring-value">${percent == null ? '未部署' : `${percent}%`}</div></div><div class="donut-title">${e(item.title)}</div><div class="donut-caption"><div class="donut-caption-primary">${e(item.caption)}</div>${detail}</div></div>`
+}
+
+function memoryDetails(view: ViewModel): string {
+  if (!view.memoryDetails.length) return ''
+  const rows = view.memoryDetails.map((item) => `<div class="resource-row"><div class="resource-label">${e(item.label)}</div><div class="resource-bar" style="--bar-gradient:${segmentGradient(item.segments, 'bar')}"><div class="resource-value">${e(item.value)}</div></div></div>`).join('')
+  return `<div class="memory-details">${rows}</div>`
 }
 
 function header(view: ViewModel): string {
@@ -38,7 +72,7 @@ function processes(view: ViewModel): string {
 
 export function buildHtml(view: ViewModel, background: BackgroundData, config: Config, fontCss = ''): string {
   const map: Record<string, () => string> = {
-    header: () => header(view), cpu: () => `<section class="card donuts">${donut(view.cpu)}${donut(view.memory)}${donut(view.swap)}</section>`,
+    header: () => header(view), cpu: () => `<section class="card resources"><div class="donuts">${donut(view.cpu)}${donut(view.memory)}${donut(view.swap)}</div>${memoryDetails(view)}</section>`,
     disk: () => disk(view), network: () => network(view), process: () => processes(view),
     footer: () => `<footer class="footer">npm/github: koishi-plugin-picstatus | ${e(view.generatedAt)}<br>${e(view.system)}${view.container ? ' | 容器资源' : ''}</footer>`,
   }

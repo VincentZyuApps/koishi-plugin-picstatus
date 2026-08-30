@@ -19,7 +19,7 @@ export async function renderStatus(
   try {
     fontInstallation = await installFont(page as unknown as FontPage, font)
     await page.setViewport({ width: config.imageWidth, height: 1200, deviceScaleFactor: 1 })
-    await page.setContent(buildHtml(createView(snapshot), background, config, font.css), { waitUntil: 'load' })
+    await page.setContent(buildHtml(createView(snapshot, config), background, config, font.css), { waitUntil: 'load' })
     await page.waitForSelector('.canvas', { timeout: 5000 })
     const fontReady = await page.evaluate(async (family, sample, required) => {
       if (document.fonts?.ready) await document.fonts.ready

@@ -16,6 +16,11 @@ export function formatBytes(value: number, suffix = ''): string {
   return `${current.toFixed(digits)}${units[index]}${suffix}`
 }
 
+export function formatGiB(value: number): string {
+  if (!Number.isFinite(value) || value < 0) return '未知'
+  return `${(value / 1024 ** 3).toFixed(2)}G`
+}
+
 export function formatDuration(seconds: number | null): string {
   if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return '未知'
   const days = Math.floor(seconds / 86400)
@@ -35,4 +40,3 @@ export function escapeHtml(value: unknown): string {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',
   })[char]!)
 }
-

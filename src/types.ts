@@ -8,6 +8,33 @@ export interface UsageMetric {
   total: number
 }
 
+export type MemoryPlatform = 'linux' | 'windows' | 'macos' | 'other'
+export type MemorySegmentKind = 'used' | 'shared' | 'compressed' | 'buffers' | 'cache'
+
+export interface MemorySegment {
+  kind: MemorySegmentKind
+  value: number
+}
+
+export interface MemoryMetric extends UsageMetric {
+  platform: MemoryPlatform
+  free: number
+  available: number
+  reportedUsed: number
+  shared: number
+  buffers: number
+  cache: number
+  buffCache: number
+  compressed: number
+  segments: MemorySegment[]
+}
+
+export interface SwapMetric extends UsageMetric {
+  free: number
+  cached: number
+  reportedUsed: number
+}
+
 export interface CpuMetric {
   brand: string
   physicalCores: number
@@ -74,8 +101,8 @@ export interface StatusSnapshot {
   koishiUptime: number
   system: MetricResult<SystemMetric>
   cpu: MetricResult<CpuMetric>
-  memory: MetricResult<UsageMetric>
-  swap: MetricResult<UsageMetric>
+  memory: MetricResult<MemoryMetric>
+  swap: MetricResult<SwapMetric>
   disks: MetricResult<DiskUsageMetric[]>
   diskIo: MetricResult<IoMetric[]>
   networks: MetricResult<NetworkMetric[]>
@@ -89,4 +116,3 @@ export interface BackgroundData {
   mime: string
   source: string
 }
-
