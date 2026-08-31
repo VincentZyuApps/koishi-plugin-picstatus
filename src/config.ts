@@ -3,16 +3,31 @@ import { Schema } from 'koishi'
 export interface SiteConfig {
   name: string // 🏷️ 站点显示名称
   url: string // 🔗 需要检测的 HTTP(S) 地址
+  useProxy: boolean // 🌐 是否按网站探测代理模式使用代理
 }
 
 export type ComponentName = 'header' | 'cpu' | 'disk' | 'network' | 'process' | 'footer'
 export type BackgroundMode = 'builtin' | 'local' | 'url' | 'none'
 export type FontMode = 'npm' | 'release' | 'custom' | 'system'
 export type MemoryPercentMode = 'platform' | 'available' | 'occupied'
+export type SiteProxyMode = 'disabled' | 'inherit' | 'configured'
 
 export const PROCESS_COUNT_MIN = 0
 export const PROCESS_COUNT_MAX = 100
 export const PROCESS_COUNT_DEFAULT = 10
+
+export const DEFAULT_SITES: SiteConfig[] = [
+  { name: '百度', url: 'https://www.baidu.com/', useProxy: false },
+  { name: 'Gitee', url: 'https://gitee.com/', useProxy: false },
+  { name: '哔哩哔哩', url: 'https://www.bilibili.com/', useProxy: false },
+  { name: 'npm 镜像', url: 'https://registry.npmmirror.com/', useProxy: false },
+  { name: '中科大 Debian', url: 'https://mirrors.ustc.edu.cn/debian/', useProxy: false },
+  { name: 'Google', url: 'https://www.google.com/', useProxy: true },
+  { name: 'GitHub', url: 'https://github.com/', useProxy: true },
+  { name: 'YouTube', url: 'https://www.youtube.com/', useProxy: true },
+  { name: 'npm 官方', url: 'https://registry.npmjs.org/', useProxy: true },
+  { name: 'Debian 官方', url: 'https://deb.debian.org/debian/', useProxy: true },
+]
 
 export interface Config {
   // ---- 📌 指令设置 ----
@@ -39,6 +54,8 @@ export interface Config {
   collectInterval: number // ⏱️ 后台状态采样间隔
   collectTimeout: number // ⌛ 单项状态采集超时
   requestTimeout: number // 🌐 HTTP 请求超时
+  siteProxyMode: SiteProxyMode // 🧭 网站探测代理来源
+  siteProxyUrl: string // 🔐 网站探测自定义代理地址
   sites: SiteConfig[] // 🛰️ 网站连通性检测列表
   processCount: number // 📋 进程排行榜最大条数
   processSort: 'cpu' | 'memory' // 📈 进程排行榜排序依据
@@ -69,6 +86,10 @@ const siteSchema = Schema.object({
     .role('link')
     .required()
     .description('🔗 用于测试状态码与响应延迟的 HTTP(S) 地址'),
+  useProxy: Schema.boolean()
+    .default(false)
+    .description('🌐 是否按网站探测代理模式使用代理<br><i>关闭时会强制直连，不继承 Koishi 或 isolate 代理。</i>')
+    .experimental(),
 })
 
 export const Config: Schema<Config> = Schema.intersect([
@@ -173,13 +194,23 @@ export const Config: Schema<Config> = Schema.intersect([
       .min(1)
       .default(8)
       .description('🌐 网站检测、头像和远程背景请求的超时时间，单位秒'),
+    siteProxyMode: Schema.union([
+      Schema.const('disabled').description('🚫 禁用代理：全部网站探测强制直连'),
+      Schema.const('inherit').description('🧩 继承代理：勾选代理的站点继承 Koishi 或 isolate 的 proxyAgent'),
+      Schema.const('configured').description('🔐 配置代理：勾选代理的站点使用下方代理地址'),
+    ])
+      .role('radio')
+      .default('disabled')
+      .description('🧭 网站连通性探测的代理模式<br><i>继承或配置代理前，请先安装并启用 Koishi 的 proxy-agent 插件。</i>')
+      .experimental(),
+    siteProxyUrl: Schema.string()
+      .default('http://127.0.0.1:7890')
+      .description('🔐 网站探测代理 URL<br><i>仅“配置代理”模式生效，支持 HTTP、HTTPS、SOCKS4、SOCKS4A、SOCKS5 与 SOCKS5H；需启用 proxy-agent 插件。</i>')
+      .experimental(),
     sites: Schema.array(siteSchema)
       .role('table')
-      .default([
-        { name: '百度', url: 'https://www.baidu.com/' },
-        { name: 'Google', url: 'https://www.google.com/' },
-      ])
-      .description('🛰️ 网站连通性检测列表<br><i>状态图会显示 HTTP 状态码、状态文本和响应延迟。</i>'),
+      .default(DEFAULT_SITES)
+      .description('🛰️ 网站连通性检测列表<br><i>状态图会按此处顺序显示 HTTP 状态码、状态文本和响应延迟。</i>'),
     processCount: Schema.number()
       .min(PROCESS_COUNT_MIN)
       .max(PROCESS_COUNT_MAX)

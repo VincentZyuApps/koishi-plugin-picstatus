@@ -1,8 +1,34 @@
-import { Context } from 'koishi'
+import { Context, HTTP } from 'koishi'
 import si from 'systeminformation'
-import type { Config } from '../config'
+import type { Config, SiteConfig } from '../config'
 import type { NetworkMetric, SiteMetric } from '../types'
 import { matchesAny } from '../utils/filter'
+
+const PROXY_PROTOCOLS = new Set(['http:', 'https:', 'socks4:', 'socks4a:', 'socks5:', 'socks5h:'])
+
+export class SiteProxyError extends Error {
+  readonly name = 'SiteProxyError'
+
+  constructor() {
+    super('代理配置无效')
+  }
+}
+
+export function resolveSiteProxy(
+  config: Pick<Config, 'siteProxyMode' | 'siteProxyUrl'>,
+  site: Pick<SiteConfig, 'useProxy'>,
+): string | undefined {
+  if (!site.useProxy || config.siteProxyMode === 'disabled') return ''
+  if (config.siteProxyMode === 'inherit') return
+  try {
+    const source = config.siteProxyUrl.trim()
+    const url = new URL(source)
+    if (!url.hostname || !PROXY_PROTOCOLS.has(url.protocol)) throw new SiteProxyError()
+    return source
+  } catch {
+    throw new SiteProxyError()
+  }
+}
 
 export async function collectNetworks(config: Config, ignored: RegExp[]): Promise<NetworkMetric[]> {
   const interfaces = await si.networkInterfaces()
@@ -35,17 +61,22 @@ function networkRank(name: string, virtual: boolean): number {
 }
 
 export async function collectSites(ctx: Context, config: Config): Promise<SiteMetric[]> {
-  const results = await Promise.all(config.sites.map(async (site): Promise<SiteMetric> => {
+  return Promise.all(config.sites.map(async (site): Promise<SiteMetric> => {
     const started = performance.now()
     try {
-      const response = await ctx.http(site.url, {
+      const request: HTTP.RequestConfig & { proxyAgent?: string } = {
         method: 'GET', timeout: config.requestTimeout * 1000, redirect: 'follow', responseType: 'text',
-      })
+      }
+      const proxyAgent = resolveSiteProxy(config, site)
+      if (proxyAgent !== undefined) request.proxyAgent = proxyAgent
+      const response = await ctx.http(site.url, request)
       return { name: site.name, status: response.status, statusText: response.statusText, delay: performance.now() - started }
     } catch (error) {
       const code = (error as { code?: string }).code
-      return { name: site.name, error: code === 'ETIMEDOUT' ? '超时' : error instanceof Error ? error.name : '请求失败' }
+      const message = error instanceof SiteProxyError
+        ? error.message
+        : code === 'ETIMEDOUT' ? '超时' : error instanceof Error ? error.name : '请求失败'
+      return { name: site.name, error: message }
     }
   }))
-  return results.sort((a, b) => (a.delay ?? Number.MAX_SAFE_INTEGER) - (b.delay ?? Number.MAX_SAFE_INTEGER))
 }

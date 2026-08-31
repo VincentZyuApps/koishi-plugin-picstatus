@@ -157,7 +157,9 @@ picstatus -s memory -n 10 -t dark
 | `collectInterval` | `number` | `10` | 后台采样间隔，单位秒 |
 | `collectTimeout` | `number` | `10` | 单项状态采集超时，单位秒 |
 | `requestTimeout` | `number` | `8` | 网站、头像和远程背景请求超时，单位秒 |
-| `sites` | `{ name, url }[]` | 百度、Google | 网站状态与响应延迟检测列表 |
+| `siteProxyMode` | `disabled \| inherit \| configured` | `disabled` | 网站探测代理模式（实验性） |
+| `siteProxyUrl` | `string` | `http://127.0.0.1:7890` | configured 模式使用的代理 URL（实验性） |
+| `sites` | `{ name, url, useProxy }[]` | 十个国内外站点 | 网站状态与响应延迟检测列表，按配置顺序显示 |
 | `processCount` | `number` | `10` | 进程排行榜条数，范围 `0-100`，`0` 表示隐藏 |
 | `processSort` | `cpu \| memory` | `cpu` | 进程排行榜排序依据 |
 | `ignoredProcesses` | `string[]` | 空 | 忽略的进程名称正则，不区分大小写 |
@@ -166,6 +168,16 @@ picstatus -s memory -n 10 -t dark
 | `hideIdleIo` | `boolean` | `false` | 隐藏当前读写或收发速度均为零的磁盘与网卡 |
 | `memoryPercentMode` | `platform \| available \| occupied` | `platform` | RAM 圆环中心百分比口径（实验性） |
 | `showMemoryBars` | `boolean` | `true` | 显示全平台 MEM 与 SWP 横条（实验性） |
+
+> #### 🌐 网站探测代理
+>
+> 使用网站探测代理前，必须先在 Koishi 中安装并启用 `proxy-agent` 插件（npm 包名 `@koishijs/plugin-proxy-agent`）。PicStatus 复用 Koishi 标准代理传输，不会自行启动或重复注册代理实现。
+>
+> `siteProxyMode` 提供三种互斥模式：`disabled` 强制所有站点直连；`inherit` 让 `useProxy` 已开启的站点继承当前 Koishi 或 isolate 的 `proxyAgent`；`configured` 让这些站点使用 `siteProxyUrl`。未开启 `useProxy` 的站点始终强制直连，不会继承全局代理。
+>
+> `siteProxyUrl` 支持 `http://`、`https://`、`socks4://`、`socks4a://`、`socks5://` 和 `socks5h://`。configured 模式下地址为空或协议无效时，对应站点会显示“代理配置无效”，不会回退直连。
+>
+> 默认站点按以下顺序显示：百度、Gitee、哔哩哔哩、npm 镜像、中科大 Debian、Google、GitHub、YouTube、npm 官方、Debian 官方。前五项默认直连，后五项默认开启 `useProxy`；在默认的 disabled 模式下仍会全部直连。已经自定义过 `sites` 的用户会继续使用自己的列表，不会被自动补项。
 
 > #### 🧠 内存显示口径
 >
