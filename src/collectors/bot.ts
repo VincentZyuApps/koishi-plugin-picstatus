@@ -1,4 +1,5 @@
 import type { Bot, Context, Session } from 'koishi'
+import FileType from 'file-type'
 import type { BotMetric, MetricResult } from '../types'
 import type { Config } from '../config'
 import type { ImageFileResponse } from '../utils/image'
@@ -14,6 +15,44 @@ interface TelegramAvatarBot {
     file?: (source: string, options?: { timeout?: number }) => Promise<ImageFileResponse>
   }
   $getFile?: (filePath: string) => Promise<ImageFileResponse>
+}
+
+type AvatarDiagnostic = (message: string) => void
+
+function safeMime(file: ImageFileResponse): string {
+  return (file.mime || file.type || 'unknown')
+    .split(';')[0]
+    .replace(/[^\w.+/-]/g, '')
+    .slice(0, 80) || 'unknown'
+}
+
+function safeErrorSummary(error: unknown): string {
+  if (!(error instanceof Error)) return 'UnknownError'
+  if (/^(响应不是图片: [\w.+/-]+|图片内容为空|图片超过 \d+ MiB 限制)$/.test(error.message)) return error.message
+  const name = /^[\w.-]{1,64}$/.test(error.name) ? error.name : 'Error'
+  const code = (error as { code?: unknown }).code
+  return typeof code === 'string' && /^[\w.-]{1,64}$/.test(code) ? `${name} code=${code}` : name
+}
+
+function telegramFileUrl(endpoint: string, filePath: string): string {
+  const url = new URL(endpoint)
+  const basePath = url.pathname.replace(/\/+$/, '')
+  const encodedPath = filePath.split('/').map(encodeURIComponent).join('/')
+  url.pathname = `${basePath}/${encodedPath}`
+  url.search = ''
+  url.hash = ''
+  return url.href
+}
+
+async function validateTelegramImageFile(file: ImageFileResponse, diagnostic?: AvatarDiagnostic) {
+  if (safeMime(file) !== 'application/octet-stream') return validateImageFile(file)
+  let detected: string | undefined
+  try {
+    detected = (await FileType.fromBuffer(file.data))?.mime
+  } catch {}
+  diagnostic?.(`Telegram 头像类型嗅探: detected=${detected?.startsWith('image/') ? detected : 'unknown'}`)
+  if (!detected?.startsWith('image/')) return validateImageFile(file)
+  return validateImageFile({ ...file, type: detected, mime: detected })
 }
 
 function pathAfterUrlPrefix(source: string, prefix: string): string | undefined {
@@ -45,23 +84,56 @@ export function resolveTelegramAvatarPath(bot: TelegramAvatarBot, source: string
   }
 }
 
-async function fetchTelegramAvatar(bot: TelegramAvatarBot, filePath: string, timeout: number) {
-  if (!bot.local && bot.file?.file) {
-    return validateImageFile(await bot.file.file(`/${filePath}`, { timeout }))
+async function fetchTelegramAvatar(
+  bot: TelegramAvatarBot,
+  filePath: string,
+  timeout: number,
+  diagnostic?: AvatarDiagnostic,
+) {
+  const endpoint = bot.file?.config?.endpoint
+  if (!bot.local && endpoint && bot.file?.file) {
+    diagnostic?.('Telegram 原生头像请求开始: transport=file-client')
+    const file = await bot.file.file(telegramFileUrl(endpoint, filePath), { timeout })
+    diagnostic?.(`Telegram 原生头像响应: transport=file-client mime=${safeMime(file)} bytes=${file.data.byteLength}`)
+    return validateTelegramImageFile(file, diagnostic)
   }
-  if (bot.$getFile) return validateImageFile(await bot.$getFile(filePath))
+  if (bot.$getFile) {
+    diagnostic?.(`Telegram 原生头像请求开始: transport=adapter-reader local=${Boolean(bot.local)}`)
+    const file = await bot.$getFile(filePath)
+    diagnostic?.(`Telegram 原生头像响应: transport=adapter-reader mime=${safeMime(file)} bytes=${file.data.byteLength}`)
+    return validateTelegramImageFile(file, diagnostic)
+  }
 }
 
-export async function fetchBotAvatar(ctx: Context, bot: Bot, source: string, timeout: number) {
+export async function fetchBotAvatar(
+  ctx: Context,
+  bot: Bot,
+  source: string,
+  timeout: number,
+  diagnostic?: AvatarDiagnostic,
+) {
   const telegramBot = bot as Bot & TelegramAvatarBot
   const filePath = resolveTelegramAvatarPath(telegramBot, source)
+  const telegram = telegramBot.platform === 'telegram' || telegramBot.adapterName === 'telegram'
+  diagnostic?.(`头像来源已解析: telegram=${telegram} nativePath=${Boolean(filePath)} dataUrl=${source.startsWith('data:')}`)
   if (filePath) {
     try {
-      const image = await fetchTelegramAvatar(telegramBot, filePath, timeout)
+      const image = await fetchTelegramAvatar(telegramBot, filePath, timeout, diagnostic)
       if (image) return image
-    } catch {}
+      diagnostic?.('Telegram 原生头像客户端不可用，转用通用 HTTP')
+    } catch (error) {
+      diagnostic?.(`Telegram 原生头像失败: ${safeErrorSummary(error)}，转用通用 HTTP`)
+    }
   }
-  return fetchImage(ctx, source, timeout)
+  diagnostic?.('通用头像请求开始')
+  try {
+    const image = await fetchImage(ctx, source, timeout)
+    diagnostic?.(`通用头像请求成功: mime=${image.mime} bytes=${image.data.byteLength}`)
+    return image
+  } catch (error) {
+    diagnostic?.(`通用头像请求失败: ${safeErrorSummary(error)}`)
+    throw error
+  }
 }
 
 export interface CounterValue {
@@ -156,8 +228,10 @@ export class MessageCounter {
 
 export class BotCollector {
   private connected = new Map<string, number>()
+  private logger: ReturnType<Context['logger']>
 
   constructor(private ctx: Context, private config: Config, private counter: MessageCounter) {
+    this.logger = ctx.logger('picstatus')
     for (const bot of ctx.bots) this.connected.set(bot.sid, Date.now())
     ctx.on('bot-connect', (bot) => { this.connected.set(bot.sid, Date.now()) })
     ctx.on('bot-disconnect', (bot) => { this.connected.delete(bot.sid) })
@@ -173,22 +247,39 @@ export class BotCollector {
     }
   }
 
+  private diagnostic(bot: Bot, message: string): void {
+    if (this.config.debug) this.logger.info(`[debug] Bot ${bot.sid}: ${message}`)
+  }
+
   private async one(bot: Bot): Promise<BotMetric> {
     let login = bot.toJSON()
     try {
       login = await bot.getLogin()
-    } catch {}
+      this.diagnostic(bot, `getLogin 成功: avatar=${Boolean(login.user?.avatar)}`)
+    } catch (error) {
+      this.diagnostic(bot, `getLogin 失败: ${safeErrorSummary(error)}，使用缓存登录信息`)
+    }
     const counter = await this.counter.get(bot)
     const connectedAt = this.connected.get(bot.sid)
     const avatarUrl = login.user?.avatar || bot.user?.avatar
     let avatar: string | undefined
     if (avatarUrl) {
       try {
-        const image = await fetchBotAvatar(this.ctx, bot, avatarUrl, this.config.requestTimeout * 1000)
+        const image = await fetchBotAvatar(
+          this.ctx,
+          bot,
+          avatarUrl,
+          this.config.requestTimeout * 1000,
+          (message) => this.diagnostic(bot, message),
+        )
         avatar = toDataUrl(image.data, image.mime)
+        this.diagnostic(bot, `头像已转为 Data URL: mime=${image.mime} bytes=${image.data.byteLength}`)
       } catch {
-        this.ctx.logger('picstatus').debug(`Bot ${bot.sid} 头像加载失败，已使用文字头像`)
+        this.diagnostic(bot, '头像加载最终失败，已使用文字头像')
+        this.logger.debug(`Bot ${bot.sid} 头像加载失败，已使用文字头像`)
       }
+    } else {
+      this.diagnostic(bot, '登录信息中没有头像地址，已使用文字头像')
     }
     return {
       key: bot.sid,

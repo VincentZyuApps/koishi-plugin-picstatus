@@ -33,11 +33,11 @@ test('config defaults provide ten paired sites and disabled proxy mode', () => {
   assert.equal(config.siteProxyUrl, 'http://127.0.0.1:7890')
   assert.deepEqual(config.sites, DEFAULT_SITES)
   assert.deepEqual(config.sites.map((site) => site.name), [
-    '百度', 'Gitee', '哔哩哔哩', 'npm 镜像', '中科大 Debian',
-    'Google', 'GitHub', 'YouTube', 'npm 官方', 'Debian 官方',
+    '百度', 'Google', 'Gitee', 'GitHub', '哔哩哔哩',
+    'YouTube', 'npm 镜像', 'npm 官方', '中科大 Debian', 'Debian 官方',
   ])
   assert.deepEqual(config.sites.map((site) => site.useProxy), [
-    false, false, false, false, false, true, true, true, true, true,
+    false, true, false, true, false, true, false, true, false, true,
   ])
 
   const legacy = ConfigSchema({

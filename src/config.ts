@@ -18,14 +18,14 @@ export const PROCESS_COUNT_DEFAULT = 10
 
 export const DEFAULT_SITES: SiteConfig[] = [
   { name: '百度', url: 'https://www.baidu.com/', useProxy: false },
-  { name: 'Gitee', url: 'https://gitee.com/', useProxy: false },
-  { name: '哔哩哔哩', url: 'https://www.bilibili.com/', useProxy: false },
-  { name: 'npm 镜像', url: 'https://registry.npmmirror.com/', useProxy: false },
-  { name: '中科大 Debian', url: 'https://mirrors.ustc.edu.cn/debian/', useProxy: false },
   { name: 'Google', url: 'https://www.google.com/', useProxy: true },
+  { name: 'Gitee', url: 'https://gitee.com/', useProxy: false },
   { name: 'GitHub', url: 'https://github.com/', useProxy: true },
+  { name: '哔哩哔哩', url: 'https://www.bilibili.com/', useProxy: false },
   { name: 'YouTube', url: 'https://www.youtube.com/', useProxy: true },
+  { name: 'npm 镜像', url: 'https://registry.npmmirror.com/', useProxy: false },
   { name: 'npm 官方', url: 'https://registry.npmjs.org/', useProxy: true },
+  { name: '中科大 Debian', url: 'https://mirrors.ustc.edu.cn/debian/', useProxy: false },
   { name: 'Debian 官方', url: 'https://deb.debian.org/debian/', useProxy: true },
 ]
 

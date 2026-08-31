@@ -177,7 +177,7 @@ picstatus -s memory -n 10 -t dark
 >
 > `siteProxyUrl` 支持 `http://`、`https://`、`socks4://`、`socks4a://`、`socks5://` 和 `socks5h://`。configured 模式下地址为空或协议无效时，对应站点会显示“代理配置无效”，不会回退直连。
 >
-> 默认站点按以下顺序显示：百度、Gitee、哔哩哔哩、npm 镜像、中科大 Debian、Google、GitHub、YouTube、npm 官方、Debian 官方。前五项默认直连，后五项默认开启 `useProxy`；在默认的 disabled 模式下仍会全部直连。已经自定义过 `sites` 的用户会继续使用自己的列表，不会被自动补项。
+> 默认站点按国内外对应关系成对显示：百度/Google、Gitee/GitHub、哔哩哔哩/YouTube、npm 镜像/npm 官方、中科大 Debian/Debian 官方。每组前者默认直连、后者默认开启 `useProxy`；在默认的 disabled 模式下仍会全部直连。已经自定义过 `sites` 的用户会继续使用自己的列表，不会被自动补项。
 
 > #### 🧠 内存显示口径
 >

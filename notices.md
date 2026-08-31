@@ -24,6 +24,16 @@ SOFTWARE.
 
 Upstream: https://github.com/lgc-NB2Dev/nonebot-plugin-picstatus
 
+## file-type
+
+Package: file-type 16.5.4
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Distributed under the MIT License.
+
+Upstream: https://github.com/sindresorhus/file-type
+
 ## LXGW WenKai Screen web-font package
 
 Package: lxgw-wenkai-screen-web 1.522.0
