@@ -3,9 +3,9 @@ import test from 'node:test'
 import { usage } from '../src/usage'
 
 test('usage gives every collapsible section a theme-aware panel', () => {
-  assert.equal(usage.match(/<details style=/g)?.length, 5)
-  assert.equal(usage.match(/<summary style=/g)?.length, 5)
-  assert.equal(usage.match(/<div style=/g)?.length, 5)
+  assert.equal(usage.match(/<details style=/g)?.length, 8)
+  assert.equal(usage.match(/<summary style=/g)?.length, 8)
+  assert.equal(usage.match(/<div style=/g)?.length, 8)
 
   for (const variable of ['--k-color-border', '--k-card-bg', '--k-text-dark', '--k-hover-bg', '--k-color-divider']) {
     assert.match(usage, new RegExp(`var\\(${variable}`))
@@ -15,9 +15,14 @@ test('usage gives every collapsible section a theme-aware panel', () => {
 })
 
 test('usage explains resource colors and thresholds across platforms', () => {
-  assert.match(usage, /CPU、磁盘、内存与 Swap 颜色图例/)
-  assert.match(usage, /CPU 圆环/)
-  assert.match(usage, /磁盘容量条/)
+  const headings = ['CPU 圆环颜色', 'RAM / MEM 颜色图例', 'SWAP / SWP 颜色图例', '磁盘容量条颜色']
+  let previous = -1
+  for (const heading of headings) {
+    const index = usage.indexOf(heading)
+    assert.ok(index > previous, `${heading} 应按状态图顺序出现`)
+    previous = index
+  }
+
   assert.match(usage, /0–69%/)
   assert.match(usage, /70–89%/)
   assert.match(usage, /90–100%/)

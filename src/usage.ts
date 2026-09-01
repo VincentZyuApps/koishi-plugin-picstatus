@@ -80,21 +80,39 @@ export const usage = `
 </details>
 
 <details style="${detailsStyle}">
-<summary style="${summaryStyle}"><b>🎨 CPU、磁盘、内存与 Swap 颜色图例</b></summary>
+<summary style="${summaryStyle}"><b>🧠 CPU 圆环颜色</b></summary>
 <div style="${detailsBodyStyle}">
-<p>CPU 圆环和磁盘容量条使用占用等级颜色，内存与 Swap 使用数据类别颜色，色段长度表示该类别占总量的比例；浅色与深色主题会调整明暗，但阈值和语义不变。</p>
+<p>${colorChip('0–69%', '#38A64B')} ${colorChip('70–89%', '#E9942D')} ${colorChip('90–100%', '#DB5B64')}</p>
+<p>CPU 按圆心显示的四舍五入整数百分比选择颜色，彩色部分表示当前占用，灰色部分表示剩余比例。绿、橙、红仅表示占用等级，不会触发告警；深色主题只调整明暗，阈值不变。数据不可用时显示“未部署”和灰色圆环。</p>
+</div>
+</details>
+
+<details style="${detailsStyle}">
+<summary style="${summaryStyle}"><b>🧠 RAM / MEM 颜色图例</b></summary>
+<div style="${detailsBodyStyle}">
+<p>内存颜色表示数据类别，色段长度表示该类别占总量的比例；浅色与深色主题会调整明暗，但类别语义不变。</p>
 <ul>
-  <li><b>CPU 圆环：</b>${colorChip('0–69%', '#38A64B')} ${colorChip('70–89%', '#E9942D')} ${colorChip('90–100%', '#DB5B64')}</li>
-  <li><b>磁盘容量条：</b>${colorChip('&lt;70%', '#38A64B')} ${colorChip('70–&lt;90%', '#E9942D')} ${colorChip('≥90%', '#DB5B64')}</li>
   <li><b>Linux / Termux(Android) 详细模式：</b>${colorChip('used', '#38A64B')} ${colorChip('shared', '#9676CE')} ${colorChip('compressed', '#666D75', '#fff')} ${colorChip('buffers', '#2594C7')} ${colorChip('cache', '#D4AA2A')} ${colorChip('free', '#C7C7C7')}</li>
   <li><b>Windows MEM / RAM：</b>${colorChip('used', '#38A64B')} ${colorChip('available', '#C7C7C7')}</li>
   <li><b>macOS / 通用平台 MEM / RAM：</b>${colorChip('active / used', '#38A64B')} ${colorChip('cache', '#D4AA2A')} ${colorChip('remaining', '#C7C7C7')}</li>
-  <li><b>所有平台 SWAP / SWP：</b>${colorChip('used', '#DB5B64')} ${colorChip('cached', '#D4AA2A')} ${colorChip('free', '#C7C7C7')}</li>
 </ul>
-<p>CPU 按圆心显示的四舍五入整数百分比选择颜色，彩色部分表示当前占用；磁盘按实际已用百分比选择颜色，彩色长度表示已用容量。两者的灰色部分均表示剩余比例。</p>
-<p>CPU 与磁盘的绿、橙、红仅表示占用等级，不会触发告警；磁盘显示红色不代表硬件健康状态异常。CPU 数据不可用时显示“未部署”和灰色圆环，单项磁盘占用率不可用时显示 <code>??.?%</code>。</p>
-<p>Linux 与 Termux/Android 优先使用完整分类，读取不到 procfs 时回退到通用分类；Windows 的 SWAP 表示 pagefile，通常没有独立 cached 分类。</p>
-<p><b>注意：</b>SWAP / SWP 的红色是 used 类别色，不是告警；实际占用比例由红色色段的长度和圆心百分比表示。</p>
+<p>Linux 与 Termux/Android 优先使用完整分类，读取不到 procfs 时回退到通用 used/cache/free 分类。</p>
+</div>
+</details>
+
+<details style="${detailsStyle}">
+<summary style="${summaryStyle}"><b>💾 SWAP / SWP 颜色图例</b></summary>
+<div style="${detailsBodyStyle}">
+<p><b>所有平台 SWAP / SWP：</b>${colorChip('used', '#DB5B64')} ${colorChip('cached', '#D4AA2A')} ${colorChip('free', '#C7C7C7')}</p>
+<p>红色是 used 类别色，不是告警；实际占用比例由红色色段长度和圆心百分比表示。深色主题只调整明暗，类别语义不变。Windows 的 SWAP 表示 pagefile，通常没有独立 cached 分类，未配置时显示“未配置”。</p>
+</div>
+</details>
+
+<details style="${detailsStyle}">
+<summary style="${summaryStyle}"><b>💽 磁盘容量条颜色</b></summary>
+<div style="${detailsBodyStyle}">
+<p>${colorChip('&lt;70%', '#38A64B')} ${colorChip('70–&lt;90%', '#E9942D')} ${colorChip('≥90%', '#DB5B64')}</p>
+<p>磁盘按实际已用百分比选择颜色，彩色长度表示已用容量，灰色背景表示剩余容量。绿、橙、红仅表示占用等级，不会触发告警；深色主题只调整明暗，阈值不变。红色不代表硬件健康状态异常，单项占用率不可用时显示 <code>??.?%</code>。</p>
 </div>
 </details>
 
