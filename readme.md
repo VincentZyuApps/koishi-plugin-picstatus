@@ -195,14 +195,18 @@ picstatus -s memory -n 10 -t dark
 >
 > `platform` 使用各平台推荐口径：Linux 和 Termux/Android 对应 htop 右侧的 used（绿色 used + 紫色 shared + compressed），Windows 对应物理已用内存，macOS 对应 active。`available` 使用 `(总量 - 可用) / 总量`，`occupied` 使用 `(总量 - 空闲) / 总量`。此配置同时控制 RAM 圆心百分比及下方第一行“已用 / 总量”的已用口径，保证两处数值一致。
 >
-> ##### 🎨 颜色图例
+> ##### 🎨 CPU、磁盘、内存与 Swap 颜色图例
 >
+> - **CPU 圆环：** <img src="https://img.shields.io/badge/-0%E2%80%9369%25-38A64B?style=flat-square" alt="绿色 0–69%"> <img src="https://img.shields.io/badge/-70%E2%80%9389%25-E9942D?style=flat-square" alt="橙色 70–89%"> <img src="https://img.shields.io/badge/-90%E2%80%93100%25-DB5B64?style=flat-square" alt="红色 90–100%">
+> - **磁盘容量条：** <img src="https://img.shields.io/badge/-%3C70%25-38A64B?style=flat-square" alt="绿色，小于 70%"> <img src="https://img.shields.io/badge/-70%E2%80%93%3C90%25-E9942D?style=flat-square" alt="橙色，70% 到小于 90%"> <img src="https://img.shields.io/badge/-%E2%89%A590%25-DB5B64?style=flat-square" alt="红色，大于等于 90%">
 > - **Linux / Termux(Android) 详细模式：** <img src="https://img.shields.io/badge/-used-38A64B?style=flat-square" alt="绿色 used"> <img src="https://img.shields.io/badge/-shared-9676CE?style=flat-square" alt="紫色 shared"> <img src="https://img.shields.io/badge/-compressed-666D75?style=flat-square" alt="深灰 compressed"> <img src="https://img.shields.io/badge/-buffers-2594C7?style=flat-square" alt="蓝色 buffers"> <img src="https://img.shields.io/badge/-cache-D4AA2A?style=flat-square" alt="黄色 cache"> <img src="https://img.shields.io/badge/-free-C7C7C7?style=flat-square" alt="浅灰 free">
 > - **Windows MEM / RAM：** <img src="https://img.shields.io/badge/-used-38A64B?style=flat-square" alt="绿色物理已用内存"> <img src="https://img.shields.io/badge/-available-C7C7C7?style=flat-square" alt="浅灰可用内存">
 > - **macOS / 通用平台 MEM / RAM：** <img src="https://img.shields.io/badge/-active%20or%20used-38A64B?style=flat-square" alt="绿色 active 或 used"> <img src="https://img.shields.io/badge/-cache-D4AA2A?style=flat-square" alt="黄色 cache"> <img src="https://img.shields.io/badge/-remaining-C7C7C7?style=flat-square" alt="浅灰剩余内存">
 > - **所有平台 SWAP / SWP：** <img src="https://img.shields.io/badge/-used-DB5B64?style=flat-square" alt="红色 Swap used"> <img src="https://img.shields.io/badge/-cached-D4AA2A?style=flat-square" alt="黄色 Swap cached"> <img src="https://img.shields.io/badge/-free-C7C7C7?style=flat-square" alt="浅灰 Swap free">
 >
-> 上述徽章采用浅色主题代表色；深色主题会调整明暗，但类别语义不变。颜色表示内存类别，色段长度表示该类别占总量的比例。SWAP / SWP 的红色是 used 类别色，不代表已经触发高占用告警。
+> CPU 圆环按照圆心显示的四舍五入整数百分比选择颜色，彩色部分表示当前占用，灰色部分表示剩余比例。磁盘容量条按照实际已用百分比选择颜色，彩色长度表示已用容量，灰色背景表示剩余容量。CPU 数据不可用时显示“未部署”和灰色圆环；单项磁盘占用率不可用时显示 `??.?%`，不显示彩色占用段。
+>
+> CPU 与磁盘的绿、橙、红仅表示占用等级，不会触发告警；磁盘显示红色也不代表硬件故障或健康状态异常。上述徽章采用浅色主题代表色，深色主题会调整明暗，但阈值和语义不变。内存与 Swap 的颜色表示数据类别，色段长度表示该类别占总量的比例；SWAP / SWP 的红色是 used 类别色，不是告警。
 >
 > Linux RAM 圆环按 htop 分类显示：绿色 used、紫色 shared、深灰 compressed、蓝色 buffers、黄色 cache。圆环的分段长度始终表示真实分类，不会随中心百分比口径改变。圆环下方第一行保留“已用 / 总量”格式，第二行显示空闲、共享、buff/cache 与可用；SWAP 同样在第一行显示“已用 / 总量”，第二行显示空闲。
 >

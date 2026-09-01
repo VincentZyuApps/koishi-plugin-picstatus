@@ -14,18 +14,28 @@ test('usage gives every collapsible section a theme-aware panel', () => {
   assert.match(usage, /border-radius:8px/)
 })
 
-test('usage explains memory segment colors across platforms', () => {
-  assert.match(usage, /内存与 Swap 颜色图例/)
+test('usage explains resource colors and thresholds across platforms', () => {
+  assert.match(usage, /CPU、磁盘、内存与 Swap 颜色图例/)
+  assert.match(usage, /CPU 圆环/)
+  assert.match(usage, /磁盘容量条/)
+  assert.match(usage, /0–69%/)
+  assert.match(usage, /70–89%/)
+  assert.match(usage, /90–100%/)
+  assert.match(usage, /&lt;70%/)
+  assert.match(usage, /70–&lt;90%/)
+  assert.match(usage, /≥90%/)
   assert.match(usage, /Linux \/ Termux\(Android\) 详细模式/)
   assert.match(usage, /Windows MEM \/ RAM/)
   assert.match(usage, /macOS \/ 通用平台 MEM \/ RAM/)
   assert.match(usage, /所有平台 SWAP \/ SWP/)
 
-  for (const color of ['#38A64B', '#9676CE', '#666D75', '#2594C7', '#D4AA2A', '#C7C7C7', '#DB5B64']) {
+  for (const color of ['#38A64B', '#E9942D', '#9676CE', '#666D75', '#2594C7', '#D4AA2A', '#C7C7C7', '#DB5B64']) {
     assert.match(usage, new RegExp(`background:${color}`, 'i'))
   }
 
   assert.match(usage, /红色是 used 类别色，不是告警/)
+  assert.match(usage, /仅表示占用等级，不会触发告警/)
+  assert.match(usage, /不代表硬件健康状态异常/)
   assert.match(usage, /色段长度.*占总量的比例/)
 })
 

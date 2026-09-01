@@ -1,5 +1,7 @@
 * text eol=lf
 
+*.md linguist-detectable=true
+
 *.png -text
 *.jpg -text
 *.ico -text
