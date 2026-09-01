@@ -10,6 +10,7 @@ export const config = {
   imageWidth: 650,
   theme: 'light', disableBlur: false, disableRadius: false, disableShadow: false,
   memoryPercentMode: 'platform', showMemoryBars: true,
+  diskLabelMode: 'auto', diskLabelMaxLength: 25, diskNoteMode: 'auto', diskNotePosition: 'below',
 } as Config
 
 export const snapshot: StatusSnapshot = {
@@ -26,7 +27,7 @@ export const snapshot: StatusSnapshot = {
     ],
   } },
   swap: { status: 'ok', value: { percent: 25, used: 4e9, reportedUsed: 4e9, total: 16e9, free: 12e9, cached: 0 } },
-  disks: { status: 'ok', value: [{ name: 'C:', percent: 70, used: 70e9, total: 100e9 }] },
+  disks: { status: 'ok', value: [{ name: 'C:', note: 'C-系统盘-SSD-m2接口', percent: 70, used: 70e9, total: 100e9 }] },
   diskIo: { status: 'ok', value: [{ name: '全部磁盘', read: 1024, write: 2048 }] },
   networks: { status: 'ok', value: [{ name: 'Ethernet', sent: 512, received: 4096 }] },
   sites: { status: 'ok', value: [{ name: 'Example', status: 200, statusText: 'OK', delay: 12 }] },
@@ -42,6 +43,8 @@ test('default template contains every component and escapes dynamic text', () =>
   assert.match(html, /SWP/)
   assert.match(html, /--ring-gradient:conic-gradient/)
   assert.match(html, /class="grid disk-grid"/)
+  assert.match(html, /class="disk-note"/)
+  assert.match(html, /└─/)
   assert.match(html, /--canvas-width:650px/)
   assert.match(html, /npm\/github: koishi-plugin-picstatus/)
   assert.match(html, /全部磁盘/)
@@ -50,6 +53,51 @@ test('default template contains every component and escapes dynamic text', () =>
   assert.match(html, /&lt;Test CPU&gt;/)
   assert.match(html, /&lt;Bot&gt;/)
   assert.doesNotMatch(html, /<Test CPU>/)
+})
+
+test('long disk labels are truncated without sacrificing the capacity bar', () => {
+  const name = '/var/lib/docker/overlay2/2e1a8172139bcd5db79186a2dc295023'
+  const view = createView({
+    ...snapshot,
+    disks: { status: 'ok', value: [{ name, percent: 70, used: 70e9, total: 100e9 }] },
+  }, config)
+  assert.equal(view.disks[0].name, '/var/lib/doc…86a2dc295023')
+
+  const html = buildHtml(view, { data: null, mime: '', source: 'builtin' }, config)
+  assert.match(html, /\/var\/lib\/doc…86a2dc295023/)
+  assert.match(html, /class="bar-fill medium" style="width:70%"/)
+  assert.match(html, /\.disk-entry\{display:grid;grid-template-columns:clamp\(96px,34%,220px\) minmax\(120px,1fr\) 64px/)
+})
+
+test('disk notes span the row, preserve both ends and support both positions', () => {
+  const note = '/data/docker-runtime/overlay2/0123456789abcdef0123456789abcdef/merged'
+  const withNote = {
+    ...snapshot,
+    disks: { status: 'ok' as const, value: [{ name: 'overlay', note, percent: 50, used: 50e9, total: 100e9 }] },
+  }
+  const below = buildHtml(createView(withNote, config), { data: null, mime: '', source: 'builtin' }, config)
+  assert.ok(below.indexOf('class="disk-row"') < below.indexOf('class="disk-note"'))
+  assert.match(below, /class="disk-note" title="\/data\/docker-runtime/)
+  assert.match(below, /class="disk-note-head">\/data\/docker-runtime/)
+  assert.match(below, /class="disk-note-tail">[0-9a-f]+\/merged/)
+  assert.match(below, /grid-column:1\/-1/)
+
+  const aboveConfig = { ...config, diskNotePosition: 'above' as const }
+  const above = buildHtml(createView(withNote, aboveConfig), { data: null, mime: '', source: 'builtin' }, aboveConfig)
+  assert.ok(above.indexOf('class="disk-note"') < above.indexOf('class="disk-row"'))
+  assert.match(above, /┌─/)
+})
+
+test('disk note content is escaped without a character limit', () => {
+  const note = '<unsafe>&'.repeat(20)
+  const view = createView({
+    ...snapshot,
+    disks: { status: 'ok', value: [{ name: 'C:', note, percent: 70, used: 70e9, total: 100e9 }] },
+  }, config)
+  assert.equal(view.disks[0].note, note)
+  const html = buildHtml(view, { data: null, mime: '', source: 'builtin' }, config)
+  assert.doesNotMatch(html, /<unsafe>/)
+  assert.match(html, /&lt;unsafe&gt;&amp;/)
 })
 
 test('RAM percent modes do not alter memory segment lengths', () => {

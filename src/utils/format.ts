@@ -35,6 +35,18 @@ export function formatFrequency(ghz: number | null): string {
   return ghz && Number.isFinite(ghz) ? `${ghz.toFixed(2)}GHz` : '未知频率'
 }
 
+export function truncateMiddle(value: string, maxLength: number): string {
+  if (!Number.isFinite(maxLength)) return value
+  const limit = Math.trunc(maxLength)
+  const chars = Array.from(value)
+  if (limit <= 0 || chars.length <= limit) return value
+  if (limit === 1) return '…'
+  const remaining = limit - 1
+  const head = Math.ceil(remaining / 2)
+  const tail = Math.floor(remaining / 2)
+  return `${chars.slice(0, head).join('')}…${tail ? chars.slice(-tail).join('') : ''}`
+}
+
 export function escapeHtml(value: unknown): string {
   return String(value ?? '').replace(/[&<>'"]/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;',

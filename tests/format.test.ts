@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { clampPercent, escapeHtml, formatBytes, formatDuration, formatGiB } from '../src/utils/format'
+import { clampPercent, escapeHtml, formatBytes, formatDuration, formatGiB, truncateMiddle } from '../src/utils/format'
 import { compilePatterns, matchesAny } from '../src/utils/filter'
 
 test('format helpers keep stable human-readable output', () => {
@@ -12,6 +12,15 @@ test('format helpers keep stable human-readable output', () => {
   assert.equal(clampPercent(120), 100)
   assert.equal(clampPercent(Number.NaN), null)
   assert.equal(escapeHtml('<img src="x">'), '&lt;img src=&quot;x&quot;&gt;')
+})
+
+test('middle truncation preserves both ends and allows non-positive limits', () => {
+  assert.equal(truncateMiddle('/dev/mapper/ubuntu--vg-root', 25), '/dev/mapper/…ntu--vg-root')
+  assert.equal(truncateMiddle('12345', 5), '12345')
+  assert.equal(truncateMiddle('12345', 4.9), '12…5')
+  assert.equal(truncateMiddle('😀甲乙丙丁', 4), '😀甲…丁')
+  assert.equal(truncateMiddle('unlimited', 0), 'unlimited')
+  assert.equal(truncateMiddle('unlimited', -1), 'unlimited')
 })
 
 test('regex filters match configured values', () => {

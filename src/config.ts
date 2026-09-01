@@ -11,6 +11,10 @@ export type BackgroundMode = 'builtin' | 'local' | 'url' | 'none'
 export type FontMode = 'npm' | 'release' | 'custom' | 'system'
 export type MemoryPercentMode = 'platform' | 'available' | 'occupied'
 export type SiteProxyMode = 'disabled' | 'inherit' | 'configured'
+export type DiskIdentityMode = 'auto' | 'mount' | 'device' | 'label' | 'physical'
+export type DiskLabelMode = DiskIdentityMode
+export type DiskNoteMode = 'none' | DiskIdentityMode
+export type DiskNotePosition = 'above' | 'below'
 
 export const PROCESS_COUNT_MIN = 0
 export const PROCESS_COUNT_MAX = 100
@@ -60,7 +64,11 @@ export interface Config {
   processCount: number // 📋 进程排行榜最大条数
   processSort: 'cpu' | 'memory' // 📈 进程排行榜排序依据
   ignoredProcesses: string[] // 🚫 忽略的进程名称正则列表
-  ignoredDisks: string[] // 💽 忽略的磁盘挂载点正则列表
+  ignoredDisks: string[] // 💽 忽略的磁盘设备名或挂载路径正则列表
+  diskLabelMode: DiskLabelMode // 🏷️ 磁盘标签来源
+  diskLabelMaxLength: number // ✂️ 磁盘标签最大字符数，非正数不限制
+  diskNoteMode: DiskNoteMode // 📝 磁盘注释来源
+  diskNotePosition: DiskNotePosition // ↕️ 磁盘注释位置
   ignoredNetworks: string[] // 📡 忽略的网卡名称正则列表
   hideIdleIo: boolean // 💤 是否隐藏无读写流量的项目
   memoryPercentMode: MemoryPercentMode // 🧠 RAM 圆环百分比口径
@@ -230,7 +238,43 @@ export const Config: Schema<Config> = Schema.intersect([
     ignoredDisks: Schema.array(String)
       .role('table')
       .default([])
-      .description('💽 忽略的磁盘挂载点正则表达式列表<br><i>例如可填写 ^/boot 或 ^C:\\\\Windows。</i>'),
+      .description('💽 忽略的磁盘身份正则表达式列表<br><i>会匹配逻辑设备、挂载路径、卷标与物理设备，例如可填写 ^/dev/loop、^/boot 或 PHYSICALDRIVE。</i>'),
+    diskLabelMode: Schema.union([
+      Schema.const('auto').description('🧭 自动：按平台与文件系统类型选择易读标签'),
+      Schema.const('mount').description('📁 挂载路径：优先显示 mount'),
+      Schema.const('device').description('💽 逻辑设备：显示 fs，例如 /dev/sdb2 或 C:'),
+      Schema.const('label').description('🏷️ 卷标：显示卷名称，例如“C-系统盘”'),
+      Schema.const('physical').description('🧱 物理设备：显示底层设备，例如 /dev/sdb 或 \\\\.\\PHYSICALDRIVE5'),
+    ])
+      .role('radio')
+      .default('auto')
+      .description('🏷️ 状态图中的磁盘标签来源<br><i>自动模式下，Linux/macOS 的 /dev 设备显示设备名，虚拟文件系统显示挂载路径；Termux/Android 优先显示挂载路径。</i>')
+      .experimental(),
+    diskLabelMaxLength: Schema.number()
+      .step(1)
+      .default(25)
+      .description('✂️ 磁盘标签最大字符数<br><i>超出后从中间省略；填写 0 或负数可取消字符上限，窄图片仍会按可用宽度显示省略号。</i>')
+      .experimental(),
+    diskNoteMode: Schema.union([
+      Schema.const('none').description('🚫 不显示磁盘注释'),
+      Schema.const('auto').description('🧭 自动：显示与主标签互补的信息'),
+      Schema.const('mount').description('📁 挂载路径：显示 mount'),
+      Schema.const('device').description('💽 逻辑设备：显示 fs'),
+      Schema.const('label').description('🏷️ 卷标：显示卷名称'),
+      Schema.const('physical').description('🧱 物理设备：显示底层设备'),
+    ])
+      .role('radio')
+      .default('auto')
+      .description('📝 容量条上方或下方的磁盘注释来源<br><i>自动模式下，Windows 显示卷标，Linux/macOS 显示与主标签互补的挂载路径或逻辑设备；重复内容会自动隐藏。</i>')
+      .experimental(),
+    diskNotePosition: Schema.union([
+      Schema.const('above').description('⬆️ 显示在容量条上方，以 ┌─ 开头'),
+      Schema.const('below').description('⬇️ 显示在容量条下方，以 └─ 开头'),
+    ])
+      .role('radio')
+      .default('below')
+      .description('↕️ 磁盘注释相对于容量条的位置')
+      .experimental(),
     ignoredNetworks: Schema.array(String)
       .role('table')
       .default(['^lo(op)?\\d*$', '^(Loopback|本地连接)'])

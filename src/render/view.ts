@@ -1,6 +1,6 @@
 import type { Config } from '../config'
 import type { MemoryMetric, MetricResult, StatusSnapshot, SwapMetric } from '../types'
-import { clampPercent, formatBytes, formatDuration, formatFrequency, formatGiB } from '../utils/format'
+import { clampPercent, formatBytes, formatDuration, formatFrequency, formatGiB, truncateMiddle } from '../utils/format'
 
 export type SegmentKind = 'used' | 'shared' | 'compressed' | 'buffers' | 'cache' | 'swap-used' | 'swap-cache'
 
@@ -33,7 +33,7 @@ export interface ViewModel {
   memory: DonutView
   swap: DonutView
   memoryBars: MemoryBarView[]
-  disks: Array<{ name: string; percent: number | null; usage: string; error?: string }>
+  disks: Array<{ name: string; note?: string; percent: number | null; usage: string; error?: string }>
   diskIo: Array<{ name: string; read: string; write: string }>
   networks: Array<{ name: string; sent: string; received: string }>
   sites: Array<{ name: string; result: string; delay: string; error: boolean }>
@@ -143,7 +143,7 @@ export function createView(snapshot: StatusSnapshot, config: Config): ViewModel 
     swap: swapView(swap),
     memoryBars: memoryBars(memory, swap, config.showMemoryBars),
     disks: value(snapshot.disks, []).map((item) => ({
-      name: item.name, percent: item.percent,
+      name: truncateMiddle(item.name, config.diskLabelMaxLength), note: item.note, percent: item.percent,
       usage: item.error || `${formatBytes(item.used)} / ${formatBytes(item.total)}`,
       error: item.error,
     })),

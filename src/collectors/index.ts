@@ -3,7 +3,7 @@ import type { Config } from '../config'
 import type { MetricResult, StatusSnapshot } from '../types'
 import { compilePatterns } from '../utils/filter'
 import { collectCpu, collectMemory, collectSystem } from './system'
-import { collectDiskIo, collectDisks } from './storage'
+import { collectDiskIo, collectDisks, DiskMetadataCache } from './storage'
 import { collectNetworks, collectSites } from './network'
 import { collectProcesses } from './process'
 
@@ -67,6 +67,8 @@ export class CollectorHub {
   private disks: RegExp[]
   private networks: RegExp[]
   private processes: RegExp[]
+  private diskMetadata = new DiskMetadataCache()
+  private diskDiagnostics = new Set<string>()
 
   constructor(private ctx: Context, private config: Config) {
     this.sampler = new Sampler(ctx, config.collectInterval)
@@ -79,10 +81,21 @@ export class CollectorHub {
     this.sampler.start({
       cpu: collectCpu,
       memory: collectMemory,
-      disks: () => collectDisks(this.config, this.disks),
+      disks: () => this.collectDisks(),
       diskIo: () => collectDiskIo(this.config),
       networks: () => collectNetworks(this.config, this.networks),
       processes: () => collectProcesses(this.config, this.processes),
+    })
+  }
+
+  private collectDisks() {
+    return collectDisks(this.config, this.disks, {
+      metadata: this.diskMetadata,
+      debug: (message) => {
+        if (!this.config.debug || this.diskDiagnostics.has(message)) return
+        this.diskDiagnostics.add(message)
+        this.ctx.logger('picstatus').info(`[debug] ${message}`)
+      },
     })
   }
 
@@ -98,7 +111,7 @@ export class CollectorHub {
       result('system', timeout, collectSystem),
       result('cpu', timeout, () => this.sampled('cpu', collectCpu)),
       result('memory', timeout, () => this.sampled('memory', collectMemory)),
-      result('disks', timeout, () => this.sampled('disks', () => collectDisks(this.config, this.disks))),
+      result('disks', timeout, () => this.sampled('disks', () => this.collectDisks())),
       result('diskIo', timeout, () => this.sampled('diskIo', () => collectDiskIo(this.config))),
       result('networks', timeout, () => this.sampled('networks', () => collectNetworks(this.config, this.networks))),
       result('sites', timeout, () => collectSites(this.ctx, this.config)),

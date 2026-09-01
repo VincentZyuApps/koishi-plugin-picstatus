@@ -53,8 +53,22 @@ function header(view: ViewModel): string {
   return `<section class="card split">${bots}<div class="extra"><span class="label">Koishi运行 ${e(view.koishiUptime)}</span><span class="label">系统运行 ${e(view.systemUptime)}</span></div></section>`
 }
 
-function disk(view: ViewModel): string {
-  const usage = view.disks.length ? view.disks.map((item) => `<div class="disk-row"><div class="name">${e(item.name)}</div><div class="bar"><div class="bar-fill ${level(item.percent)}" style="width:${item.percent ?? 0}%"></div><div class="bar-text">${e(item.usage)}</div></div><div class="right">${item.percent == null ? '??.?%' : `${item.percent.toFixed(1)}%`}</div></div>`).join('') : empty
+function diskNote(note: string | undefined, position: Config['diskNotePosition']): string {
+  if (!note) return ''
+  const chars = Array.from(note)
+  const tailLength = Math.min(16, Math.floor(chars.length / 2))
+  const head = tailLength ? chars.slice(0, -tailLength).join('') : note
+  const tail = tailLength ? chars.slice(-tailLength).join('') : ''
+  const connector = position === 'above' ? '┌─' : '└─'
+  return `<div class="disk-note" title="${e(note)}"><span class="disk-note-connector">${connector}</span><span class="disk-note-text"><span class="disk-note-head">${e(head)}</span><span class="disk-note-tail">${e(tail)}</span></span></div>`
+}
+
+function disk(view: ViewModel, config: Config): string {
+  const usage = view.disks.length ? view.disks.map((item) => {
+    const note = diskNote(item.note, config.diskNotePosition)
+    const row = `<div class="disk-row"><div class="name">${e(item.name)}</div><div class="bar"><div class="bar-fill ${level(item.percent)}" style="width:${item.percent ?? 0}%"></div><div class="bar-text">${e(item.usage)}</div></div><div class="right">${item.percent == null ? '??.?%' : `${item.percent.toFixed(1)}%`}</div></div>`
+    return `<div class="disk-entry">${config.diskNotePosition === 'above' ? note : ''}${row}${config.diskNotePosition === 'below' ? note : ''}</div>`
+  }).join('') : empty
   const io = view.diskIo.length ? view.diskIo.map((item) => `<div class="io-row"><div class="name">${e(item.name)}</div><div>读</div><div class="right">${e(item.read)}</div><div>|</div><div>写</div><div class="right">${e(item.write)}</div></div>`).join('') : empty
   return `<section class="card split"><div class="grid disk-grid">${usage}</div><div class="grid">${io}</div></section>`
 }
@@ -73,7 +87,7 @@ function processes(view: ViewModel): string {
 export function buildHtml(view: ViewModel, background: BackgroundData, config: Config, fontCss = ''): string {
   const map: Record<string, () => string> = {
     header: () => header(view), cpu: () => `<section class="card resources"><div class="donuts">${donut(view.cpu)}${donut(view.memory)}${donut(view.swap)}</div>${memoryBars(view)}</section>`,
-    disk: () => disk(view), network: () => network(view), process: () => processes(view),
+    disk: () => disk(view, config), network: () => network(view), process: () => processes(view),
     footer: () => `<footer class="footer">npm/github: koishi-plugin-picstatus | ${e(view.generatedAt)}<br>${e(view.system)}${view.container ? ' | 容器资源' : ''}</footer>`,
   }
   const components = config.components.map((name) => map[name]?.() || '').join('')

@@ -45,6 +45,7 @@ export interface CpuMetric {
 
 export interface DiskUsageMetric {
   name: string
+  note?: string
   percent: number | null
   used: number
   total: number

@@ -163,7 +163,11 @@ picstatus -s memory -n 10 -t dark
 | `processCount` | `number` | `10` | 进程排行榜条数，范围 `0-100`，`0` 表示隐藏 |
 | `processSort` | `cpu \| memory` | `cpu` | 进程排行榜排序依据 |
 | `ignoredProcesses` | `string[]` | 空 | 忽略的进程名称正则，不区分大小写 |
-| `ignoredDisks` | `string[]` | 空 | 忽略的磁盘挂载点正则，不区分大小写 |
+| `ignoredDisks` | `string[]` | 空 | 忽略的磁盘身份字段正则，不区分大小写 |
+| `diskLabelMode` | `auto \| mount \| device \| label \| physical` | `auto` | 磁盘主标签来源（实验性） |
+| `diskLabelMaxLength` | `number` | `25` | 磁盘标签最大字符数，非正数表示不限长（实验性） |
+| `diskNoteMode` | `none \| auto \| mount \| device \| label \| physical` | `auto` | 磁盘注释来源（实验性） |
+| `diskNotePosition` | `above \| below` | `below` | 磁盘注释显示位置（实验性） |
 | `ignoredNetworks` | `string[]` | 回环接口规则 | 忽略的网卡名称正则，不区分大小写 |
 | `hideIdleIo` | `boolean` | `false` | 隐藏当前读写或收发速度均为零的磁盘与网卡 |
 | `memoryPercentMode` | `platform \| available \| occupied` | `platform` | RAM 圆环中心百分比口径（实验性） |
@@ -178,6 +182,14 @@ picstatus -s memory -n 10 -t dark
 > `siteProxyUrl` 支持 `http://`、`https://`、`socks4://`、`socks4a://`、`socks5://` 和 `socks5h://`。configured 模式下地址为空或协议无效时，对应站点会显示“代理配置无效”，不会回退直连。
 >
 > 默认站点按国内外对应关系成对显示：百度/Google、Gitee/GitHub、哔哩哔哩/YouTube、npm 镜像/npm 官方、中科大 Debian/Debian 官方。每组前者默认直连、后者默认开启 `useProxy`；在默认的 disabled 模式下仍会全部直连。已经自定义过 `sites` 的用户会继续使用自己的列表，不会被自动补项。
+
+> #### 💽 磁盘标签
+>
+> `diskLabelMode` 与 `diskNoteMode` 使用相同的身份字段：`mount` 是挂载路径或盘符，`device` 是 `/dev/sdb2`、`C:` 等逻辑设备，`label` 是文件系统卷标，`physical` 是 `/dev/sdb`、`\\.\PHYSICALDRIVE5` 等底层物理设备。目标字段不可用时会回退到其他有效字段；注释与主标签相同时会继续寻找不同字段，没有不同信息时自动隐藏。选择 `none` 可以完全关闭注释。
+>
+> 自动模式下，Windows 使用盘符作为主标签、卷标作为注释；Linux/macOS 的真实设备使用逻辑设备作为主标签、挂载路径作为注释，overlay 等虚拟文件系统则反向显示；Termux/Android 使用挂载路径作为主标签、逻辑设备作为注释。`diskNotePosition` 控制注释位于容量条上方还是下方，分别以 `┌─` 和 `└─` 标识归属。
+>
+> `diskLabelMaxLength` 默认保留最多 25 个 Unicode 字符，超出后从中间省略；填写 `0` 或负数可取消主标签字符上限。注释不设字符上限，会占满可用行宽并在空间不足时保留首尾、中间显示省略号。容量横条和百分比始终保留最小宽度。`ignoredDisks` 会匹配原始逻辑设备、挂载路径、卷标与物理设备，不受最终显示模式或截断影响。开启 `debug` 后，字段缺失、回退和重复注释隐藏会写入一次性诊断日志。
 
 > #### 🧠 内存显示口径
 >

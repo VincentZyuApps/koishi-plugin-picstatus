@@ -31,6 +31,10 @@ test('config defaults provide ten paired sites and disabled proxy mode', () => {
   const config = ConfigSchema({} as Config)
   assert.equal(config.siteProxyMode, 'disabled')
   assert.equal(config.siteProxyUrl, 'http://127.0.0.1:7890')
+  assert.equal(config.diskLabelMode, 'auto')
+  assert.equal(config.diskLabelMaxLength, 25)
+  assert.equal(config.diskNoteMode, 'auto')
+  assert.equal(config.diskNotePosition, 'below')
   assert.deepEqual(config.sites, DEFAULT_SITES)
   assert.deepEqual(config.sites.map((site) => site.name), [
     '百度', 'Google', 'Gitee', 'GitHub', '哔哩哔哩',
@@ -39,6 +43,9 @@ test('config defaults provide ten paired sites and disabled proxy mode', () => {
   assert.deepEqual(config.sites.map((site) => site.useProxy), [
     false, true, false, true, false, true, false, true, false, true,
   ])
+
+  assert.equal(ConfigSchema({ diskLabelMaxLength: -1 } as Config).diskLabelMaxLength, -1)
+  assert.equal(ConfigSchema({ diskLabelMaxLength: 10000 } as Config).diskLabelMaxLength, 10000)
 
   const legacy = ConfigSchema({
     sites: [{ name: 'Legacy', url: 'https://legacy.test/' }],
