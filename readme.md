@@ -55,7 +55,7 @@ QQ群：**1085190201** 🎉
 - 支持浅色和深色主题，以及模糊、圆角、阴影效果开关。
 - 支持消息图片、内置背景、本地文件或目录、远程 URL 和无背景模式。
 - 支持 npm 内置、Release 下载、自定义路径和系统默认字体四种模式。
-- 支持 Windows、Linux、macOS 与容器环境，单项采集失败不会中断整张图片。
+- 支持 Windows、Linux、macOS、Termux/Android 与容器环境，单项采集失败不会中断整张图片。
 - 提供进程排序、显示数量和图片主题三个仅对本次出图生效的指令选项。
 
 ## 📦 安装与依赖
@@ -68,7 +68,7 @@ QQ群：**1085190201** 🎉
 | `http` | 是 | 获取头像、远程背景、网站状态和 Release 字体 |
 | `database` | 否 | 持久化 Bot 消息计数 |
 
-> 未启用 `puppeteer` 或 `http` 时，Koishi 不会加载本插件。选择 database 计数模式但服务不可用时，插件会记录警告并继续使用内存计数。
+> 未启用 `puppeteer` 或 `http` 时，Koishi 不会加载本插件。选择 database 计数模式但服务不可用时，插件会继续使用内存计数；数据库读写失败时会记录警告。
 
 ## ⌨️ 指令
 
@@ -144,7 +144,7 @@ picstatus -s memory -n 10 -t dark
 >
 > ##### custom 模式
 >
-> 填写字体文件的绝对路径，支持 `.ttf`、`.otf` 和 `.woff2`。插件会验证路径、文件大小与字体文件头；配置无效时会终止本次出图并提示检查后台日志。
+> 填写字体文件的绝对路径，支持 `.ttf`、`.otf` 和 `.woff2`。插件会验证路径、文件非空与字体文件头；配置无效时会终止本次出图并提示检查后台日志。
 >
 > ##### system 模式
 >
@@ -208,7 +208,7 @@ picstatus -s memory -n 10 -t dark
 >
 > MEM 横条会按各平台真实可获取的数据染色：Linux 使用完整 htop 分类；Termux/Android 优先读取 `/proc/meminfo` 使用同一分类，失败后回退为通用 used/cache/free；Windows 显示绿色物理已用和灰色可用；macOS 显示绿色 active、黄色 cache 和灰色剩余；其他平台显示可获得的 used、cache 和剩余。SWP 横条使用红色 used、黄色 cached 和灰色 free，Windows 的 SWAP 表示 pagefile，未配置时显示“未配置”。
 >
-> `showMemoryBars` 控制所有平台状态图底部的 MEM/SWP 横条；关闭后仍保留分类圆环和紧凑数字。横条文字采用平台分类对应的 used / total，不随 `memoryPercentMode` 改变。第一行会在 KiB、MiB、GiB 等 IEC 单位间自适应，第二行和横条数值固定使用两位小数 GiB，避免 `free -g` 的整数取整误差。
+> `showMemoryBars` 控制 CPU/RAM/SWAP 圆环下方的 MEM/SWP 横条；关闭后仍保留分类圆环和紧凑数字。横条文字采用平台分类对应的 used / total，不随 `memoryPercentMode` 改变。第一行会在 KiB、MiB、GiB 等 IEC 单位间自适应，第二行和横条数值固定使用两位小数 GiB，避免 `free -g` 的整数取整误差。
 
 > Windows 会分别显示可用网卡，例如物理 Ethernet、VPN 与虚拟网卡。可以通过 `ignoredNetworks` 排除不希望展示的接口，例如：
 >
@@ -242,7 +242,7 @@ picstatus -s memory -n 10 -t dark
 | --- | --- | --- | --- |
 | `counterStorage` | `memory \| database` | `memory` | Bot 消息计数存储方式 |
 | `resetCounterOnDisconnect` | `boolean` | `true` | Bot 断开时是否重置内存计数，database 模式不受影响 |
-| `debug` | `boolean` | `false` | 输出详细采集和渲染日志 |
+| `debug` | `boolean` | `false` | 输出 Bot 头像与磁盘字段回退诊断日志 |
 
 > memory 模式无需数据库，Koishi 重启后计数会清空。database 模式按 `platform:selfId` 隔离保存，适合需要跨重启累计统计的实例。
 

@@ -133,7 +133,7 @@ export const Config: Schema<Config> = Schema.intersect([
       Schema.const('disk').description('💽 磁盘容量与读写速度'),
       Schema.const('network').description('📡 网络速度与网站连通性'),
       Schema.const('process').description('📋 进程资源占用排行榜'),
-      Schema.const('footer').description('📝 版本、时间与系统信息'),
+      Schema.const('footer').description('📝 插件名、时间与系统信息'),
     ]))
       .role('table')
       .default(['header', 'cpu', 'disk', 'network', 'process', 'footer'])
@@ -241,10 +241,10 @@ export const Config: Schema<Config> = Schema.intersect([
       .description('💽 忽略的磁盘身份正则表达式列表<br><i>会匹配逻辑设备、挂载路径、卷标与物理设备，例如可填写 ^/dev/loop、^/boot 或 PHYSICALDRIVE。</i>'),
     diskLabelMode: Schema.union([
       Schema.const('auto').description('🧭 自动：按平台与文件系统类型选择易读标签'),
-      Schema.const('mount').description('📁 挂载路径：优先显示 mount'),
-      Schema.const('device').description('💽 逻辑设备：显示 fs，例如 /dev/sdb2 或 C:'),
-      Schema.const('label').description('🏷️ 卷标：显示卷名称，例如“C-系统盘”'),
-      Schema.const('physical').description('🧱 物理设备：显示底层设备，例如 /dev/sdb 或 \\\\.\\PHYSICALDRIVE5'),
+      Schema.const('mount').description('📁 挂载路径：优先显示 mount（例如 /、/data 或 C:\\）'),
+      Schema.const('device').description('💽 逻辑设备：显示 fs（例如 /dev/sdb2 或 C:）'),
+      Schema.const('label').description('🏷️ 卷标：显示卷名称（例如“C-系统盘”）'),
+      Schema.const('physical').description('🧱 物理设备：显示底层设备（例如 /dev/sdb 或 \\\\.\\PHYSICALDRIVE5）'),
     ])
       .role('radio')
       .default('auto')
@@ -258,10 +258,10 @@ export const Config: Schema<Config> = Schema.intersect([
     diskNoteMode: Schema.union([
       Schema.const('none').description('🚫 不显示磁盘注释'),
       Schema.const('auto').description('🧭 自动：显示与主标签互补的信息'),
-      Schema.const('mount').description('📁 挂载路径：显示 mount'),
-      Schema.const('device').description('💽 逻辑设备：显示 fs'),
-      Schema.const('label').description('🏷️ 卷标：显示卷名称'),
-      Schema.const('physical').description('🧱 物理设备：显示底层设备'),
+      Schema.const('mount').description('📁 挂载路径：显示 mount（例如 /、/data 或 C:\\）'),
+      Schema.const('device').description('💽 逻辑设备：显示 fs（例如 /dev/sdb2 或 C:）'),
+      Schema.const('label').description('🏷️ 卷标：显示卷名称（例如“C-系统盘”）'),
+      Schema.const('physical').description('🧱 物理设备：显示底层设备（例如 /dev/sdb 或 \\\\.\\PHYSICALDRIVE5）'),
     ])
       .role('radio')
       .default('auto')
@@ -336,6 +336,6 @@ export const Config: Schema<Config> = Schema.intersect([
       .description('🔄 Bot 断开连接时是否重置内存消息计数<br><i>数据库模式不会因断开连接而清除持久化数据。</i>'),
     debug: Schema.boolean()
       .default(false)
-      .description('🐛 是否输出详细调试日志<br><i>生产环境建议关闭，排查采集或渲染问题时再开启。</i>'),
+      .description('🐛 是否输出 Bot 头像与磁盘字段回退诊断日志<br><i>生产环境建议关闭，排查头像或磁盘信息问题时再开启。</i>'),
   }).description('🧠 统计与调试设置 🔧'),
 ])

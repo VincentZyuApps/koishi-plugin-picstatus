@@ -69,11 +69,11 @@ export const usage = `
 <details style="${detailsStyle}">
 <summary style="${summaryStyle}"><b>📈 采集、计数与兼容性</b></summary>
 <div style="${detailsBodyStyle}">
-<p>支持 Windows、Linux、macOS 与容器环境，可展示 CPU、内存、Swap、磁盘、网络、进程、网站和 Bot 状态。</p>
+<p>支持 Windows、Linux、macOS、Termux/Android 与容器环境，可展示 CPU、内存、Swap、磁盘、网络、进程、网站和 Bot 状态。</p>
 <p>网站探测支持禁用代理、继承 Koishi/isolate 代理、使用 PicStatus 配置代理三种模式，并可在站点列表中逐项控制。</p>
 <p><b>⚠️ 使用 HTTP 或 SOCKS 代理前，必须先安装并启用 Koishi 的 <code>proxy-agent</code> 插件。</b></p>
 <p>默认将国内外对应站点成对排列：百度/Google、Gitee/GitHub、哔哩哔哩/YouTube、npm 镜像/npm 官方、中科大 Debian/Debian 官方；国内站点默认直连，国外站点默认勾选代理。</p>
-<p>磁盘主标签与注释可分别选择挂载路径、逻辑设备、卷标或物理设备；默认在 Windows 显示“盘符 + 卷标”，在 Linux/macOS 显示“逻辑设备 + 挂载路径”。</p>
+<p>磁盘主标签与注释可分别选择挂载路径、逻辑设备、卷标或物理设备；自动模式下，Windows 显示“盘符 + 卷标”，Linux/macOS 的真实设备显示“逻辑设备 + 挂载路径”、虚拟文件系统反向显示，Termux/Android 显示“挂载路径 + 逻辑设备”。</p>
 <p>注释可关闭或放在容量条上方/下方，并使用 <code>┌─</code>/<code>└─</code> 标识归属；长注释会保留首尾并在中间省略，不会挤掉容量条和百分比。</p>
 <p>消息计数默认保存在内存中；选择 database 后可跨重启保留，database 不可用时会回退到内存。</p>
 </div>
@@ -102,5 +102,5 @@ export const usage = `
 </div>
 </details>
 
-<p>📖 完整配置与故障排查请查看插件 README。</p>
+<p>📖 完整配置与行为说明请查看插件 README。</p>
 `

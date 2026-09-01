@@ -28,3 +28,11 @@ test('usage explains memory segment colors across platforms', () => {
   assert.match(usage, /红色是 used 类别色，不是告警/)
   assert.match(usage, /色段长度.*占总量的比例/)
 })
+
+test('usage describes current platform and disk presentation behavior', () => {
+  assert.match(usage, /Termux\/Android 与容器环境/)
+  assert.match(usage, /Linux\/macOS 的真实设备显示.*虚拟文件系统反向显示/)
+  assert.match(usage, /Termux\/Android 显示“挂载路径 \+ 逻辑设备”/)
+  assert.match(usage, /完整配置与行为说明请查看插件 README/)
+  assert.doesNotMatch(usage, /完整配置与故障排查/)
+})
