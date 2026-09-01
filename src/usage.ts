@@ -1,5 +1,8 @@
 const pkg = require('../package.json')
 
+const colorChip = (label: string, background: string, foreground = '#171717') =>
+  `<span style="display:inline-block;padding:1px 6px;margin:1px 2px;border-radius:3px;background:${background};color:${foreground};font-weight:600;line-height:1.5">${label}</span>`
+
 export const usage = `
 <h2>📊 PicStatus 状态图片 🖼️</h2>
 <p><b>当前版本：</b>v${pkg.version}</p>
@@ -8,7 +11,7 @@ export const usage = `
   <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
     <img src="https://img.shields.io/npm/v/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm version">
   </a>
-  <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
+  <a href="https://npm-stat.com/charts.html?package=koishi-plugin-picstatus" target="_blank">
     <img src="https://img.shields.io/npm/dm/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm downloads">
   </a>
   <br>
@@ -62,6 +65,19 @@ export const usage = `
 <p><b>⚠️ 使用 HTTP 或 SOCKS 代理前，必须先安装并启用 Koishi 的 <code>proxy-agent</code> 插件。</b></p>
 <p>默认将国内外对应站点成对排列：百度/Google、Gitee/GitHub、哔哩哔哩/YouTube、npm 镜像/npm 官方、中科大 Debian/Debian 官方；国内站点默认直连，国外站点默认勾选代理。</p>
 <p>消息计数默认保存在内存中；选择 database 后可跨重启保留，database 不可用时会回退到内存。</p>
+</details>
+
+<details>
+<summary><b>🧠 内存与 Swap 颜色图例</b></summary>
+<p>颜色表示内存类别，色段长度表示该类别占总量的比例。浅色与深色主题会调整明暗，但类别语义不变。</p>
+<ul>
+  <li><b>Linux / Termux(Android) 详细模式：</b>${colorChip('used', '#38A64B')} ${colorChip('shared', '#9676CE')} ${colorChip('compressed', '#666D75', '#fff')} ${colorChip('buffers', '#2594C7')} ${colorChip('cache', '#D4AA2A')} ${colorChip('free', '#C7C7C7')}</li>
+  <li><b>Windows MEM / RAM：</b>${colorChip('used', '#38A64B')} ${colorChip('available', '#C7C7C7')}</li>
+  <li><b>macOS / 通用平台 MEM / RAM：</b>${colorChip('active / used', '#38A64B')} ${colorChip('cache', '#D4AA2A')} ${colorChip('remaining', '#C7C7C7')}</li>
+  <li><b>所有平台 SWAP / SWP：</b>${colorChip('used', '#DB5B64')} ${colorChip('cached', '#D4AA2A')} ${colorChip('free', '#C7C7C7')}</li>
+</ul>
+<p>Linux 与 Termux/Android 优先使用完整分类，读取不到 procfs 时回退到通用分类；Windows 的 SWAP 表示 pagefile，通常没有独立 cached 分类。</p>
+<p><b>注意：</b>SWAP / SWP 的红色是 used 类别色，不是告警；实际占用比例由红色色段的长度和圆心百分比表示。</p>
 </details>
 
 <details>

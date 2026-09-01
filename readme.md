@@ -4,7 +4,7 @@
   <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
     <img src="https://img.shields.io/npm/v/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm version">
   </a>
-  <a href="https://www.npmjs.com/package/koishi-plugin-picstatus" target="_blank">
+  <a href="https://npm-stat.com/charts.html?package=koishi-plugin-picstatus" target="_blank">
     <img src="https://img.shields.io/npm/dm/koishi-plugin-picstatus?style=flat-square&logo=npm" alt="npm downloads">
   </a>
   <a href="./LICENSE">
@@ -182,6 +182,15 @@ picstatus -s memory -n 10 -t dark
 > #### 🧠 内存显示口径
 >
 > `platform` 使用各平台推荐口径：Linux 和 Termux/Android 对应 htop 右侧的 used（绿色 used + 紫色 shared + compressed），Windows 对应物理已用内存，macOS 对应 active。`available` 使用 `(总量 - 可用) / 总量`，`occupied` 使用 `(总量 - 空闲) / 总量`。此配置同时控制 RAM 圆心百分比及下方第一行“已用 / 总量”的已用口径，保证两处数值一致。
+>
+> ##### 🎨 颜色图例
+>
+> - **Linux / Termux(Android) 详细模式：** <img src="https://img.shields.io/badge/-used-38A64B?style=flat-square" alt="绿色 used"> <img src="https://img.shields.io/badge/-shared-9676CE?style=flat-square" alt="紫色 shared"> <img src="https://img.shields.io/badge/-compressed-666D75?style=flat-square" alt="深灰 compressed"> <img src="https://img.shields.io/badge/-buffers-2594C7?style=flat-square" alt="蓝色 buffers"> <img src="https://img.shields.io/badge/-cache-D4AA2A?style=flat-square" alt="黄色 cache"> <img src="https://img.shields.io/badge/-free-C7C7C7?style=flat-square" alt="浅灰 free">
+> - **Windows MEM / RAM：** <img src="https://img.shields.io/badge/-used-38A64B?style=flat-square" alt="绿色物理已用内存"> <img src="https://img.shields.io/badge/-available-C7C7C7?style=flat-square" alt="浅灰可用内存">
+> - **macOS / 通用平台 MEM / RAM：** <img src="https://img.shields.io/badge/-active%20or%20used-38A64B?style=flat-square" alt="绿色 active 或 used"> <img src="https://img.shields.io/badge/-cache-D4AA2A?style=flat-square" alt="黄色 cache"> <img src="https://img.shields.io/badge/-remaining-C7C7C7?style=flat-square" alt="浅灰剩余内存">
+> - **所有平台 SWAP / SWP：** <img src="https://img.shields.io/badge/-used-DB5B64?style=flat-square" alt="红色 Swap used"> <img src="https://img.shields.io/badge/-cached-D4AA2A?style=flat-square" alt="黄色 Swap cached"> <img src="https://img.shields.io/badge/-free-C7C7C7?style=flat-square" alt="浅灰 Swap free">
+>
+> 上述徽章采用浅色主题代表色；深色主题会调整明暗，但类别语义不变。颜色表示内存类别，色段长度表示该类别占总量的比例。SWAP / SWP 的红色是 used 类别色，不代表已经触发高占用告警。
 >
 > Linux RAM 圆环按 htop 分类显示：绿色 used、紫色 shared、深灰 compressed、蓝色 buffers、黄色 cache。圆环的分段长度始终表示真实分类，不会随中心百分比口径改变。圆环下方第一行保留“已用 / 总量”格式，第二行显示空闲、共享、buff/cache 与可用；SWAP 同样在第一行显示“已用 / 总量”，第二行显示空闲。
 >
