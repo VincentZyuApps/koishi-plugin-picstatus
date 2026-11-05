@@ -42,11 +42,11 @@ QQ群：**1085190201** 🎉
 
 ### Windows
 
-![PicStatus Windows 状态图预览](docs/images/preview/preview.windows.png)
+![PicStatus Windows 状态图预览](https://cdn.jsdelivr.net/gh/VincentZyuApps/koishi-plugin-picstatus@main/docs/images/preview/preview.windows.png)
 
 ### Linux
 
-![PicStatus Linux 状态图预览](docs/images/preview/preview.linux.png)
+![PicStatus Linux 状态图预览](https://cdn.jsdelivr.net/gh/VincentZyuApps/koishi-plugin-picstatus@main/docs/images/preview/preview.linux.png)
 
 ## ✨ 功能
 
