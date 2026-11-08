@@ -64,6 +64,7 @@ export interface Config {
   processCount: number // 📋 进程排行榜最大条数
   processSort: 'cpu' | 'memory' // 📈 进程排行榜排序依据
   ignoredProcesses: string[] // 🚫 忽略的进程名称正则列表
+  ignoreZombies: boolean // 🧟 忽略已退出的僵尸进程 (类 Unix 系统)
   ignoredDisks: string[] // 💽 忽略的磁盘设备名或挂载路径正则列表
   diskLabelMode: DiskLabelMode // 🏷️ 磁盘标签来源
   diskLabelMaxLength: number // ✂️ 磁盘标签最大字符数，非正数不限制
@@ -235,6 +236,9 @@ export const Config: Schema<Config> = Schema.intersect([
       .role('table')
       .default([])
       .description('🚫 忽略的进程名称正则表达式列表<br><i>匹配时不区分大小写。</i>'),
+    ignoreZombies: Schema.boolean()
+      .default(true)
+      .description('🧟 忽略已退出的僵尸进程 (类 Unix 系统)<br><i>开启后自动过滤已释放全部内存的死进程（Zombie / Defunct），防止其占用 CPU 排行榜。</i>'),
     ignoredDisks: Schema.array(String)
       .role('table')
       .default([])
